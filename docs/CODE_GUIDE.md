@@ -24,4 +24,7 @@ Each is used because there is no simpler way, and each is commented in the code.
 | `System.getProperty("user.home")` | `data/LeaderboardStore.java` (constructor) | Gives the user's home folder (e.g. `C:\Users\Budi`). The leaderboard is saved there in `.ketikin\leaderboard.csv`, because a program cannot write into its own jar. |
 | `DefaultTableCellRenderer` | `ui/LeaderboardPanel.java` (`styleTable`) | Centers the text in each table cell. We use Swing's ready-made renderer and only change its alignment (3 lines). |
 | `getTableHeader()` styling | `ui/LeaderboardPanel.java` (`styleTable`) | Gives the column titles the `Theme` colors and stops columns from being dragged into another order. |
+| `setPreferredSize(new Dimension(w, h))` | `ui/KeyboardHeatmapPanel.java` (`createKey`) | Gives every heatmap key the same square size, and the space bar a wide size. |
+| `setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))` | `ui/Theme.java` (`styleButton`) | Shows a "hand" mouse cursor over buttons. |
+| `setToolTipText` | `ui/KeyboardHeatmapPanel.java` (`colorKey`) | Small text that appears when the mouse rests on a heatmap key ("'e' salah 4 kali"). |
 | `FileWriter(file, true)` (append mode) | `test/SelfTest.java` only | Adds broken lines to the end of a test CSV file, to check that they are skipped. The app itself always rewrites the whole file. |

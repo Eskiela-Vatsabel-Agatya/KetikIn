@@ -46,6 +46,9 @@ public class GamePanel extends JPanel implements TimerListener {
 
     // Isi kotak ketik pada pengecekan sebelumnya. Dipakai untuk tahu berapa huruf BARU yang diketik.
     private String previousText = "";
+    // true selama dialog "Keluar dari permainan?" terbuka. Selama itu detak timer diabaikan,
+    // supaya ronde tidak selesai (dan skornya tidak tersimpan) di belakang dialog.
+    private boolean askingToQuit = false;
 
     private JLabel modeLabel;
     private JLabel descriptionLabel;
@@ -227,8 +230,14 @@ public class GamePanel extends JPanel implements TimerListener {
 
     // Tombol keluar: tanya konfirmasi, lalu kembali ke menu tanpa menyimpan skor.
     private void quitGame() {
+        // Dialog konfirmasi menunggu jawaban pemain, tapi thread timer tetap berdetak.
+        // Tanpa flag ini, waktu Time Attack/Survival bisa habis di belakang dialog:
+        // ronde selesai dan skornya tersimpan, padahal pemain sedang ingin keluar.
+        // (Bug ini ditemukan saat robustness test di Phase 6.)
+        askingToQuit = true;
         boolean yes = mainFrame.askConfirmation(
                 "Keluar dari permainan?\nSkor ronde ini tidak akan disimpan.", "Keluar ke Menu");
+        askingToQuit = false;
         if (yes) {
             stopTimer();
             mode = null;   // ronde dibuang
@@ -475,6 +484,10 @@ public class GamePanel extends JPanel implements TimerListener {
                 // Tanpa pengecekan ini, detak lama bisa mengubah layar ronde baru, atau
                 // memanggil finishGame() dua kali.
                 if (tickingTimer != timer || mode == null || mode.isOver()) {
+                    return;
+                }
+                // Dialog "Keluar?" sedang terbuka: jangan ubah apa pun dulu (lihat quitGame).
+                if (askingToQuit) {
                     return;
                 }
                 handleTick(elapsedMillis);

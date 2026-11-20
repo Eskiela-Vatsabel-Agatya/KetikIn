@@ -13,6 +13,11 @@ import ui.MainFrame;
 public class Main {
 
     public static void main(String[] args) {
+        // Look-and-feel: sengaja TIDAK diganti, kita pakai tampilan bawaan Java ("Metal").
+        // Look-and-feel Windows menggambar tombol dengan gayanya sendiri dan mengabaikan
+        // warna latar dari Theme, sehingga tombol biru kita akan menjadi abu-abu.
+
+
         // [MATERI: Multithreading - EDT]
         // Swing tidak thread-safe: komponen Swing hanya boleh dibuat dan diubah oleh
         // satu thread khusus, yaitu Event Dispatch Thread (EDT).

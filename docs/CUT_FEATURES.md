@@ -4,6 +4,16 @@ Features that were cut or made smaller to keep the code simple, and why.
 
 Nothing has been cut so far. The optional "New personal best!" message was built (Phase 5),
 because it only needed one small loop (`LeaderboardStore.getPersonalBest`) and one label.
+The optional heatmap tooltips were built too (Phase 6): one `setToolTipText` line per key.
+
+## Simplified (Phase 6)
+
+| What | Simplification | Why |
+|---|---|---|
+| Heatmap "Simbol lain" | Shows at most the **5** most missed symbols that are not on the drawn keyboard. | A long list would make the panel wider than the window. |
+| Heatmap position | The keyboard is **next to** the result numbers, not under them. | Under them it does not fit in a 650-pixel-high window. |
+| Quit dialog | While "Keluar?" is open, timer ticks are ignored, but the clock is **not paused**. | Pausing would need the timer to remember and subtract paused time. Ignoring ticks needs one `boolean`. |
+| Look-and-feel | Kept Java's default ("Metal"). | The Windows look-and-feel ignores our button colors. |
 
 ## Simplified (Phase 5)
 

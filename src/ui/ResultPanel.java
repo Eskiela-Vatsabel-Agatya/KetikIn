@@ -16,7 +16,7 @@ import model.TypingStats;
 
 /*
  * ResultPanel: layar hasil setelah satu ronde selesai. Menampilkan skor, WPM, akurasi,
- * waktu, dan jumlah ketukan benar/salah. (Heatmap keyboard ditambahkan di Phase 6.)
+ * waktu, jumlah ketukan benar/salah, dan heatmap kesalahan di keyboard.
  * Owner: Person B
  * Materi: GUI (BorderLayout, GridLayout, label, tombol), String (String.format),
  *         Polymorphism runtime (mode.calculateScore())
@@ -35,7 +35,7 @@ public class ResultPanel extends JPanel {
     private JLabel timeLabel;
     private JLabel correctLabel;
     private JLabel wrongLabel;
-    // Heatmap kesalahan, dibuat di Phase 6.
+    // Heatmap kesalahan (gambar keyboard berwarna).
     private KeyboardHeatmapPanel heatmapPanel;
 
     // Nama mode ronde terakhir, dipakai tombol "Main lagi".
@@ -68,8 +68,7 @@ public class ResultPanel extends JPanel {
         return panel;
     }
 
-    // Bagian tengah: kotak berisi angka-angka hasil.
-    // Di Phase 6, heatmap keyboard akan ditaruh di bawah kotak ini.
+    // Bagian tengah: kotak berisi angka-angka hasil, dan heatmap keyboard di sebelahnya.
     private JPanel createCenterPanel() {
         JPanel center = new JPanel(new FlowLayout(FlowLayout.CENTER));
         center.setOpaque(false);
@@ -89,7 +88,11 @@ public class ResultPanel extends JPanel {
         scoreLabel.setForeground(Theme.ACCENT);
 
         center.add(statsBox);
-        // TODO Phase 6: tambahkan heatmapPanel di sini (di bawah statsBox).
+
+        // Heatmap kesalahan di sebelah kanan kotak angka. (Di bawahnya tidak muat
+        // di jendela setinggi 650 pixel.) FlowLayout menaruh keduanya berdampingan.
+        heatmapPanel = new KeyboardHeatmapPanel();
+        center.add(heatmapPanel);
         return center;
     }
 
@@ -152,5 +155,6 @@ public class ResultPanel extends JPanel {
         timeLabel.setText(String.format("%.1f detik", stats.getElapsedMillis() / MILLIS_PER_SECOND));
         correctLabel.setText(String.valueOf(stats.getCorrectKeystrokes()));
         wrongLabel.setText(String.valueOf(stats.getWrongKeystrokes()));
+        heatmapPanel.showMistakes(stats.getMistakes());
     }
 }

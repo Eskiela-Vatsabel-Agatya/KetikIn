@@ -1,6 +1,7 @@
 package ui;
 
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Font;
 
 import javax.swing.BorderFactory;
@@ -28,6 +29,13 @@ public class Theme {
     public static final Color CORRECT = new Color(166, 227, 161);     // #A6E3A1 hijau = benar
     public static final Color WRONG = new Color(243, 139, 168);       // #F38BA8 merah = salah
 
+    // Warna heatmap: tombol tanpa kesalahan = putih, tombol paling sering salah = merah tua.
+    // Warna di antaranya dihitung oleh KeyboardHeatmapPanel.calculateColor().
+    public static final Color HEAT_NONE = new Color(255, 255, 255);   // #FFFFFF putih
+    public static final Color HEAT_MAX = new Color(170, 20, 40);      // #AA1428 merah tua
+    // Warna huruf di atas tombol heatmap yang sudah gelap.
+    public static final Color HEAT_TEXT_ON_DARK = new Color(255, 255, 255);
+
     // Warna yang sama dalam bentuk teks, untuk dipakai di dalam HTML JLabel.
     public static final String TEXT_HTML = "#cdd6f4";
     public static final String CORRECT_HTML = "#a6e3a1";
@@ -40,6 +48,8 @@ public class Theme {
     public static final Font NORMAL_FONT = new Font(Font.SANS_SERIF, Font.PLAIN, 16);
     public static final Font BUTTON_FONT = new Font(Font.SANS_SERIF, Font.BOLD, 16);
     public static final Font SMALL_FONT = new Font(Font.SANS_SERIF, Font.PLAIN, 13);
+    // Huruf di tombol-tombol heatmap keyboard.
+    public static final Font KEY_FONT = new Font(Font.SANS_SERIF, Font.BOLD, 14);
     // Font monospace (semua huruf sama lebar) untuk teks target dan kotak ketik.
     public static final Font TYPING_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 24);
 
@@ -64,6 +74,8 @@ public class Theme {
         button.setForeground(BACKGROUND);
         // Tidak menggambar kotak titik-titik di sekitar teks saat tombol fokus.
         button.setFocusPainted(false);
+        // Kursor mouse berubah menjadi "tangan" saat berada di atas tombol, tanda bisa diklik.
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         button.setBorder(BorderFactory.createEmptyBorder(SMALL_PADDING, PADDING, SMALL_PADDING, PADDING));
     }
 }
