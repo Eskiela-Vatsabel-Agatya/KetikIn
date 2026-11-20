@@ -115,9 +115,9 @@ public class MenuPanel extends JPanel {
 
         JButton codeButton = new JButton(GameMode.MODE_CODE);
         codeButton.addActionListener(e -> {
-            showComingSoon();
+            startMode(GameMode.MODE_CODE);
         });
-        grid.add(createModeCard(codeButton, "Ketik 5 baris kode Java persis sama. Enter untuk kirim."));
+        grid.add(createModeCard(codeButton, "Ketik 5 baris kode Java persis sama. Enter untuk kirim satu baris."));
 
         return grid;
     }
@@ -147,8 +147,7 @@ public class MenuPanel extends JPanel {
         JButton leaderboardButton = new JButton("Leaderboard");
         Theme.styleButton(leaderboardButton);
         leaderboardButton.addActionListener(e -> {
-            // TODO Phase 5: mainFrame.showLeaderboard();
-            showComingSoon();
+            mainFrame.showLeaderboard();
         });
         panel.add(leaderboardButton);
 
@@ -178,11 +177,6 @@ public class MenuPanel extends JPanel {
         nameField.setText(player.getName());
         mainFrame.setPlayer(player);
         mainFrame.startGame(modeName);
-    }
-
-    private void showComingSoon() {
-        JOptionPane.showMessageDialog(this, "Fitur ini segera hadir.", "Segera hadir",
-                JOptionPane.INFORMATION_MESSAGE);
     }
 
     // Tombol Keluar: tanya konfirmasi dulu, baru System.exit(0).

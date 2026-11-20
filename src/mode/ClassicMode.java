@@ -28,6 +28,17 @@ public class ClassicMode extends GameMode {
         finished = false;
     }
 
+    // Constructor kedua, KHUSUS untuk kelas anak (CodeMode).
+    // Bedanya dengan constructor di atas: nama mode bisa dipilih sendiri, dan teks target
+    // belum diisi (CodeMode mengisinya dengan baris kode, bukan kata acak).
+    // protected = hanya kelas anak (dan kelas di package yang sama) yang boleh memakainya.
+    // [MATERI: Polymorphism - compile-time] dua constructor dengan parameter berbeda = overloading.
+    protected ClassicMode(String modeName, WordBank wordBank) {
+        super(modeName, wordBank);
+        targetText = "";
+        finished = false;
+    }
+
     // @Override = "method ini menimpa method milik kelas induk".
     // Kalau nama atau parameternya salah ketik, compiler langsung memberi error.
     @Override

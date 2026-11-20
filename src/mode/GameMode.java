@@ -68,6 +68,12 @@ public abstract class GameMode {
         return false;
     }
 
+    // true kalau pemain mengetik satu baris lalu mengirimnya dengan Enter (Code Mode).
+    // false kalau teks langsung selesai begitu panjang ketikan sama dengan target (Classic).
+    public boolean isLineMode() {
+        return false;
+    }
+
     // Kata-kata berikutnya yang ditampilkan abu-abu setelah target. Kosong kalau tidak ada.
     public String getUpcomingText() {
         return "";

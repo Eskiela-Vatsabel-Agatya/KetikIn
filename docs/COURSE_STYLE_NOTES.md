@@ -143,5 +143,5 @@ https://ambatucode.stevan.id/modules/ppbo-2026 needs a login. The team checked t
 - **Input Processing & Validation:** `JOptionPane.showMessageDialog`, `trim()`, `isEmpty()`, `try/catch`.
 - **Layout Manager:** only `FlowLayout`, `BorderLayout`, `GridLayout`. No `CardLayout`, no `JTabbedPane`.
 
-Note: the Phase 1 placeholder buttons in the four screen panels still use anonymous `ActionListener`s. They are
-temporary and get replaced (with lambdas) when each screen is really built in Phase 3/5.
+Note: the Phase 1 placeholder buttons used anonymous `ActionListener`s. Since Phase 5 all of them are replaced,
+and every button uses `addActionListener(e -> { ... });`.

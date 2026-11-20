@@ -28,6 +28,7 @@ public class ResultPanel extends JPanel {
     private MainFrame mainFrame;
 
     private JLabel titleLabel;
+    private JLabel personalBestLabel;
     private JLabel scoreLabel;
     private JLabel wpmLabel;
     private JLabel accuracyLabel;
@@ -47,12 +48,24 @@ public class ResultPanel extends JPanel {
         setBackground(Theme.BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(Theme.PADDING, Theme.PADDING, Theme.PADDING, Theme.PADDING));
 
-        titleLabel = Theme.createLabel("", Theme.TITLE_FONT, Theme.ACCENT);
-        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        add(titleLabel, BorderLayout.NORTH);
-
+        add(createTitlePanel(), BorderLayout.NORTH);
         add(createCenterPanel(), BorderLayout.CENTER);
         add(createButtonPanel(), BorderLayout.SOUTH);
+    }
+
+    // Bagian atas: judul, dan di bawahnya tulisan "Rekor pribadi baru!" (kalau ada).
+    private JPanel createTitlePanel() {
+        JPanel panel = new JPanel(new GridLayout(2, 1));
+        panel.setOpaque(false);
+
+        titleLabel = Theme.createLabel("", Theme.TITLE_FONT, Theme.ACCENT);
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(titleLabel);
+
+        personalBestLabel = Theme.createLabel("", Theme.HEADING_FONT, Theme.CORRECT);
+        personalBestLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(personalBestLabel);
+        return panel;
     }
 
     // Bagian tengah: kotak berisi angka-angka hasil.
@@ -109,16 +122,28 @@ public class ResultPanel extends JPanel {
         });
         panel.add(menuButton);
 
-        // TODO Phase 5: tombol "Leaderboard".
+        JButton leaderboardButton = new JButton("Leaderboard");
+        Theme.styleButton(leaderboardButton);
+        leaderboardButton.addActionListener(e -> {
+            // Langsung buka tab mode yang baru dimainkan.
+            mainFrame.showLeaderboard(lastModeName);
+        });
+        panel.add(leaderboardButton);
         return panel;
     }
 
     // Mengisi semua label dengan hasil ronde yang baru selesai.
-    public void showResult(GameMode mode, Player player) {
+    // newPersonalBest = true kalau skor ini lebih tinggi dari semua skor pemain ini sebelumnya di mode ini.
+    public void showResult(GameMode mode, Player player, boolean newPersonalBest) {
         lastModeName = mode.getName();
         TypingStats stats = mode.getStats();
 
         titleLabel.setText("Hasil " + mode.getName() + " - " + player.getName());
+        if (newPersonalBest) {
+            personalBestLabel.setText("Rekor pribadi baru!");
+        } else {
+            personalBestLabel.setText(" ");   // spasi supaya tinggi baris tetap sama
+        }
         // calculateScore() dipanggil lewat variabel GameMode: rumus yang dipakai
         // adalah rumus milik mode aslinya (runtime polymorphism).
         scoreLabel.setText(String.valueOf(mode.calculateScore()));

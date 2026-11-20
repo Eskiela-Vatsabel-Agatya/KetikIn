@@ -6,22 +6,26 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
+import data.LeaderboardStore;
 import data.WordBank;
 import data.WordFileException;
 import mode.ClassicMode;
+import mode.CodeMode;
 import mode.GameMode;
 import mode.SurvivalMode;
 import mode.TimeAttackMode;
 import model.Player;
+import model.ScoreEntry;
 
 /*
  * MainFrame: satu-satunya jendela aplikasi. Di dalamnya ada 4 layar (Menu, Game, Hasil,
  * Leaderboard) yang ditumpuk dengan CardLayout; hanya satu yang terlihat pada satu waktu.
- * MainFrame juga menyimpan data bersama: WordBank (dimuat sekali) dan Player saat ini.
- * Panel-panel memanggil method di kelas ini untuk pindah layar.
+ * MainFrame juga menyimpan data bersama: WordBank (dimuat sekali), LeaderboardStore,
+ * dan Player saat ini. Panel-panel memanggil method di kelas ini untuk pindah layar.
  * Owner: Person C
  * Materi: GUI (JFrame, CardLayout, JOptionPane), Inheritance (extends JFrame),
- *         Exception (try/catch WordFileException), Polymorphism runtime (createMode)
+ *         Exception (try/catch WordFileException), Polymorphism runtime (createMode),
+ *         Polymorphism compile-time (overload showLeaderboard)
  */
 // [MATERI: Inheritance] MainFrame adalah JFrame yang kita tambahi isi sendiri.
 public class MainFrame extends JFrame {
@@ -48,6 +52,8 @@ public class MainFrame extends JFrame {
 
     // Dimuat SEKALI saat aplikasi mulai, lalu dipakai bersama oleh semua ronde.
     private WordBank wordBank;
+    // Satu objek untuk membaca/menulis file leaderboard, dipakai bersama oleh semua layar.
+    private LeaderboardStore leaderboardStore;
     private Player player;
     // true kalau file kata berhasil dimuat dan semua layar sudah dibuat.
     private boolean ready;
@@ -61,6 +67,7 @@ public class MainFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setBackground(Theme.BACKGROUND);
 
+        leaderboardStore = new LeaderboardStore();
         ready = loadWordBank();
         // Layar hanya dibuat kalau file kata berhasil dimuat. Kalau gagal, Main akan menutup jendela ini.
         if (ready) {
@@ -136,7 +143,9 @@ public class MainFrame extends JFrame {
         if (modeName.equals(GameMode.MODE_SURVIVAL)) {
             return new SurvivalMode(wordBank);
         }
-        // TODO Phase 5: tambahkan Code Mode di sini.
+        if (modeName.equals(GameMode.MODE_CODE)) {
+            return new CodeMode(wordBank);
+        }
 
         // Nama mode tidak dikenal = salah di kode kita sendiri (bukan salah pemain).
         // Lebih baik langsung error dengan pesan jelas daripada diam-diam memakai mode lain.
@@ -151,15 +160,44 @@ public class MainFrame extends JFrame {
         gamePanel.startGame(mode);
     }
 
-    // Dipanggil GamePanel ketika ronde selesai.
+    // Dipanggil GamePanel ketika ronde selesai (BUKAN saat pemain keluar di tengah ronde).
+    // Skor disimpan ke file dulu, lalu layar hasil ditampilkan.
     public void showResult(GameMode mode) {
-        resultPanel.showResult(mode, player);
+        int score = mode.calculateScore();
+
+        // Rekor lama dicari SEBELUM skor baru disimpan, supaya bisa dibandingkan.
+        int previousBest = leaderboardStore.getPersonalBest(player.getName(), mode.getName());
+
+        // Constructor ScoreEntry versi kedua: WPM, akurasi, dan tanggal diambil otomatis.
+        ScoreEntry entry = new ScoreEntry(player.getName(), mode.getName(), score, mode.getStats());
+        // Disimpan langsung di EDT, tanpa thread tambahan: filenya hanya beberapa baris,
+        // jadi menulisnya sangat cepat dan layar tidak sempat terasa macet.
+        boolean saved = leaderboardStore.addScore(entry);
+        boolean newPersonalBest = saved && score > previousBest;
+
+        resultPanel.showResult(mode, player, newPersonalBest);
         showScreen(RESULT);
+
+        // Gagal menyimpan bukan alasan untuk menyembunyikan hasil: layar hasil tetap tampil,
+        // pemain hanya diberi peringatan.
+        if (!saved) {
+            JOptionPane.showMessageDialog(this, leaderboardStore.getLastErrorMessage(),
+                    "Leaderboard", JOptionPane.WARNING_MESSAGE);
+        }
     }
 
+    // [MATERI: Polymorphism - compile-time] dua method showLeaderboard dengan parameter berbeda.
+    // Dari menu: tanpa parameter, tab pertama (Classic) yang terbuka.
     public void showLeaderboard() {
-        // TODO Phase 5: leaderboardPanel.refresh(); lalu tampilkan.
+        showLeaderboard(GameMode.MODE_CLASSIC);
+    }
+
+    // Dari layar hasil: tab mode yang baru saja dimainkan langsung terbuka.
+    public void showLeaderboard(String modeName) {
         showScreen(LEADERBOARD);
+        // Data dibaca ulang setiap kali layar ini dibuka, supaya skor terbaru ikut tampil.
+        leaderboardPanel.refresh();
+        leaderboardPanel.selectTab(modeName);
     }
 
     // Menampilkan dialog konfirmasi dengan tombol "Ya" dan "Tidak" (bahasa Indonesia).
@@ -175,6 +213,10 @@ public class MainFrame extends JFrame {
 
     public WordBank getWordBank() {
         return wordBank;
+    }
+
+    public LeaderboardStore getLeaderboardStore() {
+        return leaderboardStore;
     }
 
     public Player getPlayer() {

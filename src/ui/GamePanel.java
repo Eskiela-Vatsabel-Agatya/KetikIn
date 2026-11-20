@@ -265,6 +265,7 @@ public class GamePanel extends JPanel implements TimerListener {
     }
 
     // Classic: satu teks panjang. Selesai ketika semua huruf sudah diketik.
+    // Code Mode juga memakai method ini untuk satu baris, tapi barisnya baru dikirim dengan Enter.
     private void handleTextInput() {
         String target = mode.getCurrentTarget();
         String typed = inputField.getText();
@@ -280,7 +281,8 @@ public class GamePanel extends JPanel implements TimerListener {
         refreshDisplay(typed);
 
         // Semua huruf target sudah diketik: kirim ke mode.
-        if (typed.length() == target.length()) {
+        // Kecuali Code Mode (isLineMode): di sana pemain harus menekan Enter (lihat handleEnter).
+        if (typed.length() == target.length() && !mode.isLineMode()) {
             mode.submit(typed);
             if (mode.isOver()) {
                 finishGame();
@@ -322,12 +324,23 @@ public class GamePanel extends JPanel implements TimerListener {
         refreshDisplay(typed);
     }
 
-    // Enter ditekan. Di Time Attack dan Survival, Enter sama dengan Spasi: kirim kata sekarang.
-    // Di Classic, Enter tidak melakukan apa-apa. (Code Mode memakai Enter di Phase 5.)
+    // Enter ditekan.
+    //   Time Attack dan Survival: Enter sama dengan Spasi, kirim kata sekarang.
+    //   Code Mode: kirim baris sekarang.
+    //   Classic: Enter tidak melakukan apa-apa.
     private void handleEnter() {
-        if (mode == null || mode.isOver() || !mode.isWordMode()) {
+        if (mode == null || mode.isOver()) {
             return;
         }
+        if (mode.isWordMode()) {
+            submitWordWithEnter();
+        } else if (mode.isLineMode()) {
+            submitLine();
+        }
+    }
+
+    // Time Attack dan Survival: kirim isi kotak ketik sebagai satu kata.
+    private void submitWordWithEnter() {
         String typed = inputField.getText();
         recordNewKeystrokes(typed, mode.getCurrentTarget());
         submitWord(typed);
@@ -335,6 +348,28 @@ public class GamePanel extends JPanel implements TimerListener {
             finishGame();
             return;
         }
+        clearInput();
+    }
+
+    // Code Mode: kirim baris yang sedang diketik.
+    private void submitLine() {
+        // Proses dulu huruf terakhir yang mungkin belum diproses (kalau pemain menekan Enter
+        // sebelum tombol huruf terakhir dilepas). Ini juga membuang huruf yang kelebihan.
+        handleTextInput();
+
+        String typed = inputField.getText();
+        // Baris belum lengkap: Enter diabaikan, supaya Enter yang tidak sengaja
+        // tidak membuat pemain melewati satu baris.
+        if (typed.length() < mode.getCurrentTarget().length()) {
+            return;
+        }
+        // Jangan trim() di sini: di Code Mode spasi ikut dinilai, jadi harus sama persis.
+        mode.submit(typed);
+        if (mode.isOver()) {
+            finishGame();
+            return;
+        }
+        // Baris berikutnya: kotak ketik dikosongkan.
         clearInput();
     }
 

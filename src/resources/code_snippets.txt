@@ -121,3 +121,15 @@ try (BufferedReader br = new BufferedReader(
 } catch (IOException e) {
     System.out.println("Gagal membaca file");
 }
+---
+String name = "Sari";
+int age = 20;
+if (age >= 17 && name.length() > 0) {
+    System.out.println("Halo " + name + ", umur kamu " + age + " tahun, boleh daftar.");
+}
+---
+int width = 8;   // lebar
+int height = 5;  // tinggi
+int area = width * height;
+boolean big = area > 30 && width != height;
+System.out.println("Luas: " + area);

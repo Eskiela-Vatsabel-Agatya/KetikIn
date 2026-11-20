@@ -15,5 +15,6 @@ public interface DataStore<T> {
     List<T> loadAll();
 
     // Menulis semua data ke penyimpanan (menimpa isi lama).
-    void saveAll(List<T> items);
+    // Mengembalikan true kalau berhasil, false kalau gagal (supaya UI bisa memberi tahu pemain).
+    boolean saveAll(List<T> items);
 }
