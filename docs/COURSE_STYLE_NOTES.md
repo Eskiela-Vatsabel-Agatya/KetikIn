@@ -1,35 +1,47 @@
 # Course Style Notes
 
-Findings from reading all lecture slides in `Full Materi PBO` (Week 1–14, by Afrizal Doewes).
+Findings from reading all lecture slides in `Full Materi PBO` (Week 1–14, by Afrizal Doewes), plus the
+practicum GUI pages on ambatucode (checked by the team, see the last section).
 Every later phase follows these notes. Format: **what the course shows → what KetikIn does**.
 
-Where a feature is *not* in the slides, it is marked **(not in slides)**. Some of those were probably
-covered in the practicum (ambatucode), which I could not open.
+Where a feature is *not* in the slides, it is marked **(not in slides)**.
 
 ## GUI (Week 13)
 
-- **Event listeners:** the slides use an **anonymous inner class**:
-  `button.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent e) { ... } });`
-  No lambdas anywhere in the slides. → **KetikIn uses anonymous inner classes for every listener. No lambdas.**
-- The slides write `public void actionPerformed(...)` inside the anonymous class **without** `@Override`.
-  But `@Override` *is* taught in Week 4 (Inheritance). → KetikIn puts `@Override` on overridden methods,
-  including inside anonymous listeners, because it catches typos and was taught.
+- **Event listeners for buttons:** the slides use an anonymous inner class
+  (`new ActionListener() { public void actionPerformed(ActionEvent e) { ... } }`), but the **practicum pages
+  "Event Handling" and "Input Processing" use a lambda**: `btn.addActionListener(e -> { ... });`.
+  → **KetikIn uses a lambda ONLY for `addActionListener`, and always in exactly that form**
+  (`button.addActionListener(e -> { ... });`, with braces, even for one line).
+  → **Everything else stays an anonymous inner class**: the `KeyListener`, the `Runnable` passed to
+  `SwingUtilities.invokeLater`, and the `DefaultTableModel` override (`isCellEditable`).
+  No other lambdas, no method references.
+- `@Override` is taught in Week 4 (Inheritance). → KetikIn puts `@Override` on every overridden method,
+  including the methods inside anonymous inner classes.
 - Imports in the slides: `import javax.swing.*` style is implied. → KetikIn uses **explicit imports**
   (`import javax.swing.JButton;`) so you can see exactly which classes a file uses.
 - Components shown: `JFrame`, `JLabel`, `JButton`, `ImageIcon`, `JOptionPane.showMessageDialog`.
-- Layout managers shown: `FlowLayout`, `BorderLayout`, `GridLayout`, `BoxLayout` (and `setLayout(null)` once).
+- Layout managers in the slides: `FlowLayout`, `BorderLayout`, `GridLayout`, `BoxLayout` (and `setLayout(null)`
+  once). The practicum "Layout Manager" page shows only **`FlowLayout`, `BorderLayout` and `GridLayout`**.
   Tip in the slides: nest `JPanel`s with different layouts. → KetikIn uses `BorderLayout` + `GridLayout` +
-  `FlowLayout` + nested panels. **No `null` layout.**
+  `FlowLayout` + nested panels. **No `null` layout, no `BoxLayout`.**
 - The slides build the `JFrame` directly inside `main`. → KetikIn uses `MainFrame extends JFrame` (inheritance,
   Week 4), which is the same idea organized as a class.
-- **(not in slides)** `CardLayout`, `JTextField`, `JTable`, `JTabbedPane`, `DefaultTableModel`, `JScrollPane`.
-  These match the practicum sections "Containers & Panels", "Basic Components" and "JTable & Collections",
-  and the brief requires them.
-- **(not in slides)** `KeyListener` and `DocumentListener`: neither appears. → KetikIn uses a **`KeyListener`
-  written as an anonymous inner class** (same shape as the `ActionListener` example: implement the interface,
-  fill in the methods), reading the text in `keyReleased`. Reason: it is the closest to the slide style, and
-  unlike `DocumentListener` it lets us safely change the text field from inside the listener (clearing it after
-  Space/Enter). `keyTyped` and `keyPressed` stay empty with a comment.
+- **(not in slides or practicum)** `CardLayout` and `JTabbedPane`. Required by the brief (screen switching,
+  one leaderboard tab per mode). → kept, and listed in `CODE_GUIDE.md` under "Things outside the course material".
+- **JTable (practicum "JTable & Collections"):** `new DefaultTableModel(kolom, 0)` (column names + 0 rows),
+  then filled row by row from an `ArrayList`. → `LeaderboardPanel` uses exactly this pattern
+  (`addRow` in a plain `for` loop).
+- **Key input:** the slides show neither `KeyListener` nor `DocumentListener`. The practicum "Event Handling"
+  page only *names* `DocumentListener` ("mendeteksi perubahan teks pada komponen input"), with no example.
+  `KeyListener` is not shown anywhere. → KetikIn keeps a **`KeyListener` written as an anonymous inner class**,
+  reading the text in `keyReleased`. Reason: unlike `DocumentListener`, it lets us safely change the text field
+  from inside the listener (clearing it after Space/Enter); a `DocumentListener` that changes its own document
+  throws an exception. `keyTyped` and `keyPressed` stay empty with a comment. Listed in `CODE_GUIDE.md` under
+  "Things outside the course material".
+- **Input validation (practicum "Input Processing & Validation"):** `JOptionPane.showMessageDialog`, `trim()`,
+  `isEmpty()`, `try/catch`. → the menu validates the name with `trim()` + `isEmpty()` + our own checks, catches
+  `InvalidUsernameException`, and shows the message with `JOptionPane.showMessageDialog`.
 - **(not in slides)** `SwingUtilities.invokeLater`. Required by the brief for thread safety (EDT rule).
   Listed in `CODE_GUIDE.md` under "Things outside the course material".
 
@@ -117,13 +129,19 @@ covered in the practicum (ambatucode), which I could not open.
 ## Things that do NOT appear anywhere in the slides
 
 - **`enum`**: not in any slide. → **No enums.** Mode names are `public static final String` constants.
-- **Lambdas / method references / streams**: not in any slide. → never used.
+- **Lambdas**: not in any slide, but used by the practicum for buttons. → only `addActionListener(e -> { ... });`.
+- **Method references / streams**: not in the slides or the practicum. → never used.
 - `var`, records, switch expressions, text blocks: not in any slide. → never used.
 
 ## Practicum website
 
-I could not open https://ambatucode.stevan.id/modules/ppbo-2026 (login needed). The decisions above that are
-marked **(not in slides)** would be good to double-check against these practicum pages, if you can paste them:
-- GUI → "Event Handling" (does it use `KeyListener`, `KeyAdapter` or `DocumentListener`?)
-- GUI → "Containers & Panels" (is `CardLayout` shown?)
-- GUI → "JTable & Collections" (how is the table model built?)
+https://ambatucode.stevan.id/modules/ppbo-2026 needs a login. The team checked these GUI pages and reported
+(already folded into the sections above):
+- **Event Handling / Input Processing:** buttons use lambdas `btn.addActionListener(e -> { ... });`.
+  `DocumentListener` is only named; `KeyListener` is not shown.
+- **JTable & Collections:** `new DefaultTableModel(kolom, 0)` filled from an `ArrayList`.
+- **Input Processing & Validation:** `JOptionPane.showMessageDialog`, `trim()`, `isEmpty()`, `try/catch`.
+- **Layout Manager:** only `FlowLayout`, `BorderLayout`, `GridLayout`. No `CardLayout`, no `JTabbedPane`.
+
+Note: the Phase 1 placeholder buttons in the four screen panels still use anonymous `ActionListener`s. They are
+temporary and get replaced (with lambdas) when each screen is really built in Phase 3/5.
