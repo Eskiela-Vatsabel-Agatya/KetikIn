@@ -189,6 +189,7 @@ public class MainFrame extends JFrame {
         leaderboardPanel.showFilter(focus);
     }
 
+    // [MATERI: GUI - JOptionPane]
     // Menampilkan dialog konfirmasi dengan tombol "Ya" dan "Tidak" (bahasa Indonesia).
     // Mengembalikan true kalau pemain memilih "Ya".
     public boolean askConfirmation(String message, String title) {

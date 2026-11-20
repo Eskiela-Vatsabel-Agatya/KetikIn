@@ -1,7 +1,7 @@
 package data;
 
 /*
- * WordFileException: dilempar ketika file kata atau file potongan kode tidak bisa dibaca
+ * WordFileException: dilempar ketika file kata tidak bisa dibaca
  * (tidak ditemukan atau isinya kosong).
  * Owner: Person B
  * Materi: Exception (custom exception, checked exception)

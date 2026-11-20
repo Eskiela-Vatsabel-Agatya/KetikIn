@@ -36,7 +36,7 @@ public class Theme {
     // Warna huruf di atas tombol heatmap yang sudah gelap.
     public static final Color HEAT_TEXT_ON_DARK = new Color(255, 255, 255);
 
-    // Warna yang sama dalam bentuk teks, untuk dipakai di dalam HTML JLabel.
+    // Warna yang sama dalam bentuk teks, untuk dipakai di dalam teks HTML (teks target di GamePanel).
     public static final String TEXT_HTML = "#cdd6f4";
     public static final String CORRECT_HTML = "#a6e3a1";
     public static final String WRONG_HTML = "#f38ba8";

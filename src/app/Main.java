@@ -17,7 +17,6 @@ public class Main {
         // Look-and-feel Windows menggambar tombol dengan gayanya sendiri dan mengabaikan
         // warna latar dari Theme, sehingga tombol biru kita akan menjadi abu-abu.
 
-
         // [MATERI: Multithreading - EDT]
         // Swing tidak thread-safe: komponen Swing hanya boleh dibuat dan diubah oleh
         // satu thread khusus, yaitu Event Dispatch Thread (EDT).

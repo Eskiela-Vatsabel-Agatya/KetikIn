@@ -39,4 +39,4 @@ and sends keys to the real app window (with a temporary leaderboard folder); scr
 | 21 | Corrupt leaderboard line | ✅ Phase 6 | The line is skipped with a console warning; all other scores still show. (Also in SelfTest.) |
 | 22 | Missing leaderboard file | ✅ Phase 6 | Empty leaderboard, no dialog, no crash. The file is created at the first saved score. |
 | 23 | Unreadable leaderboard file | ✅ Phase 6 | Warning dialog; old file is not overwritten; result screen still shows. (Also in SelfTest.) |
-| 24 | Run the jar from a different folder | ✅ Phase 6 | Words load from inside the jar. **To do by hand:** copy the jar to the Desktop and double-click it once. |
+| 24 | Run the jar from a different folder | ✅ Phase 7 | Final `dist\KetikIn.jar` copied to another folder: started with the same command Windows uses for a double-click (Java 8 `javaw -jar`), the "KetikIn" window opened. The full click-through test (Normal, J, Q, X, Z, leaderboard filters) passed on Java 8 and Java 25 with that copy. **To do by hand once:** copy the jar to the Desktop and really double-click it. |

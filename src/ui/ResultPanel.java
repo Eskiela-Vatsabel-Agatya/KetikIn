@@ -80,7 +80,7 @@ public class ResultPanel extends JPanel {
         statsBox.setBackground(Theme.PANEL);
         statsBox.setBorder(BorderFactory.createEmptyBorder(Theme.PADDING, Theme.PADDING * 2, Theme.PADDING, Theme.PADDING * 2));
 
-        scoreLabel = addStatRow(statsBox, "Score");
+        scoreLabel = addStatRow(statsBox, "Skor");
         wpmLabel = addStatRow(statsBox, "WPM");
         accuracyLabel = addStatRow(statsBox, "Akurasi");
         timeLabel = addStatRow(statsBox, "Waktu");

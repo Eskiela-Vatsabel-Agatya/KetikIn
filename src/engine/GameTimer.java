@@ -18,6 +18,7 @@ public class GameTimer extends Thread {
     // Jarak antar detak dalam milidetik.
     private static final long TICK_MILLIS = 100;
 
+    // [MATERI: Multithreading - volatile]
     // volatile = setiap thread selalu melihat nilai TERBARU dari variabel ini.
     // Flag ini diubah oleh thread UI (stopTimer) dan dibaca oleh thread timer (run).
     // Tanpa volatile, thread timer bisa terus melihat nilai lama (true) dan tidak berhenti.
@@ -51,8 +52,7 @@ public class GameTimer extends Thread {
                 listener.onTick(elapsedMillis);
             }
         }
-        // Baris tes: aktifkan untuk melihat kapan thread timer benar-benar berhenti.
-        // System.out.println("[GameTimer] thread berhenti");
+        // Loop selesai: run() berakhir, jadi thread ini juga selesai.
     }
 
     // Menghentikan loop di run() dengan aman. Dipanggil dari thread UI (EDT).

@@ -155,6 +155,7 @@ public class LeaderboardStore implements DataStore<ScoreEntry> {
             }
         }
 
+        // [MATERI: Collections - sort]
         // Langkah 2: urutkan. Collections.sort memakai compareTo milik ScoreEntry
         // (skor tertinggi dulu; kalau sama, WPM tertinggi dulu).
         Collections.sort(matchingEntries);

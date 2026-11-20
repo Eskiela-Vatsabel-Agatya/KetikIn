@@ -37,7 +37,8 @@ public class Player {
 
     // Mengecek semua aturan nama satu per satu. Kalau valid, mengembalikan nama yang sudah di-trim.
     // Kalau tidak valid, melempar InvalidUsernameException dengan pesan aturan yang dilanggar.
-    // static: bisa dipanggil tanpa membuat objek Player dulu (dipakai oleh menu).
+    // static: method ini hanya memakai parameter 'name', tidak memakai field objek,
+    // jadi tidak perlu objek Player untuk memanggilnya. Dipakai oleh setName di atas.
     // [MATERI: String] validasi dengan loop + Character, tanpa regex.
     public static String validate(String name) throws InvalidUsernameException {
         // Aturan 1: tidak boleh kosong.
