@@ -1,8 +1,6 @@
 package ui;
 
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -31,23 +29,19 @@ public class LeaderboardPanel extends JPanel {
     public LeaderboardPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
 
-        // SEMENTARA (Phase 1): hanya label besar + satu tombol untuk mencoba CardLayout.
-        // Diganti dengan tabel sungguhan di Phase 5.
+        // SEMENTARA: hanya judul + tombol kembali. Tabel sungguhan dibuat di Phase 5.
         setLayout(new BorderLayout());
         setBackground(Theme.BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(Theme.PADDING, Theme.PADDING, Theme.PADDING, Theme.PADDING));
 
-        JLabel titleLabel = new JLabel("Leaderboard", SwingConstants.CENTER);
-        titleLabel.setFont(Theme.TITLE_FONT);
-        titleLabel.setForeground(Theme.TEXT);
+        JLabel titleLabel = Theme.createLabel("Leaderboard (segera hadir)", Theme.TITLE_FONT, Theme.TEXT);
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         add(titleLabel, BorderLayout.CENTER);
 
         JButton backButton = new JButton("Kembali ke Menu");
-        backButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                mainFrame.showMenu();
-            }
+        Theme.styleButton(backButton);
+        backButton.addActionListener(e -> {
+            mainFrame.showMenu();
         });
         add(backButton, BorderLayout.SOUTH);
     }

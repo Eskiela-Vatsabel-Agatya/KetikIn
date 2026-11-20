@@ -23,7 +23,14 @@ public class Main {
             @Override
             public void run() {
                 MainFrame frame = new MainFrame();
-                frame.setVisible(true);
+                if (frame.isReady()) {
+                    frame.setVisible(true);
+                } else {
+                    // File kata gagal dimuat (pesan error sudah ditampilkan oleh MainFrame).
+                    // Jendela dibuang tanpa pernah ditampilkan. Karena tidak ada jendela
+                    // yang terbuka lagi, program Java berhenti dengan sendirinya.
+                    frame.dispose();
+                }
             }
         });
     }

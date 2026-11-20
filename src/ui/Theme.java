@@ -3,12 +3,18 @@ package ui;
 import java.awt.Color;
 import java.awt.Font;
 
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+
 /*
  * Theme: semua warna, font, dan jarak yang dipakai tampilan KetikIn dikumpulkan di sini.
  * Kalau mau ganti warna, cukup ubah di satu tempat ini.
- * Kelas ini hanya berisi konstanta, jadi tidak perlu dibuat objeknya.
+ * Ada juga dua method static kecil untuk membuat label dan tombol dengan gaya yang sama,
+ * supaya kode panel tidak mengulang baris yang sama berkali-kali.
+ * Kelas ini tidak perlu dibuat objeknya; semua isinya static.
  * Owner: Person C
- * Materi: Variables (static final / konstanta), GUI (Color, Font)
+ * Materi: Variables (static final / konstanta, static method), GUI (Color, Font)
  */
 // [MATERI: Variables - static final]
 public class Theme {
@@ -23,6 +29,7 @@ public class Theme {
     public static final Color WRONG = new Color(243, 139, 168);       // #F38BA8 merah = salah
 
     // Warna yang sama dalam bentuk teks, untuk dipakai di dalam HTML JLabel.
+    public static final String TEXT_HTML = "#cdd6f4";
     public static final String CORRECT_HTML = "#a6e3a1";
     public static final String WRONG_HTML = "#f38ba8";
     public static final String PENDING_HTML = "#9399b2";
@@ -31,6 +38,7 @@ public class Theme {
     public static final Font TITLE_FONT = new Font(Font.SANS_SERIF, Font.BOLD, 40);
     public static final Font HEADING_FONT = new Font(Font.SANS_SERIF, Font.BOLD, 22);
     public static final Font NORMAL_FONT = new Font(Font.SANS_SERIF, Font.PLAIN, 16);
+    public static final Font BUTTON_FONT = new Font(Font.SANS_SERIF, Font.BOLD, 16);
     public static final Font SMALL_FONT = new Font(Font.SANS_SERIF, Font.PLAIN, 13);
     // Font monospace (semua huruf sama lebar) untuk teks target dan kotak ketik.
     public static final Font TYPING_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 24);
@@ -38,4 +46,24 @@ public class Theme {
     // ---------- Jarak ----------
     // Jarak kosong (padding) di tepi panel, dalam pixel.
     public static final int PADDING = 20;
+    // Jarak kecil di dalam tombol dan kotak.
+    public static final int SMALL_PADDING = 10;
+
+    // Membuat JLabel dengan teks, font, dan warna tertentu.
+    public static JLabel createLabel(String text, Font font, Color color) {
+        JLabel label = new JLabel(text);
+        label.setFont(font);
+        label.setForeground(color);
+        return label;
+    }
+
+    // Memberi gaya yang sama ke sebuah tombol: latar biru aksen, teks gelap, tanpa garis tepi abu-abu.
+    public static void styleButton(JButton button) {
+        button.setFont(BUTTON_FONT);
+        button.setBackground(ACCENT);
+        button.setForeground(BACKGROUND);
+        // Tidak menggambar kotak titik-titik di sekitar teks saat tombol fokus.
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(SMALL_PADDING, PADDING, SMALL_PADDING, PADDING));
+    }
 }
