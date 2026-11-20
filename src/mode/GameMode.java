@@ -8,7 +8,7 @@ import model.TypingStats;
  * dimiliki semua mode (nama, bank kata, statistik) dan daftar method yang WAJIB
  * dibuat oleh setiap mode.
  * Kenapa abstract? "Mode permainan" saja belum punya aturan; aturannya baru ada di mode
- * yang konkret (Classic, Time Attack, ...). Jadi GameMode tidak boleh dibuat objeknya langsung.
+ * yang konkret (ClassicMode, LetterFocusMode). Jadi GameMode tidak boleh dibuat objeknya langsung.
  * Owner: Person A
  * Materi: Abstraction (abstract class), Inheritance (kelas induk), Encapsulation (protected),
  *         Polymorphism runtime (method yang di-override oleh kelas anak)
@@ -16,14 +16,14 @@ import model.TypingStats;
 // [MATERI: Abstraction - abstract class]
 public abstract class GameMode {
 
-    // Nama-nama mode. Dipakai juga sebagai nama tab di Leaderboard dan isi kolom "mode" di CSV.
+    // Nilai getFocusLetter() kalau tidak ada huruf fokus (mode normal).
+    public static final char NO_FOCUS = ' ';
+    // Isi kolom "mode" di CSV (dan kolom Fokus di Leaderboard) untuk mode normal.
+    // Kalau ada huruf fokus, isinya huruf itu sendiri, misalnya "J".
     // (Materi kuliah tidak memakai enum, jadi kita pakai konstanta String.)
-    public static final String MODE_CLASSIC = "Classic";
-    public static final String MODE_TIME_ATTACK = "Time Attack";
-    public static final String MODE_SURVIVAL = "Survival";
-    public static final String MODE_CODE = "Code";
+    public static final String FOCUS_NORMAL = "Normal";
 
-    // protected = bisa dipakai langsung oleh kelas anak (ClassicMode, dll).
+    // protected = bisa dipakai langsung oleh kelas anak (ClassicMode, LetterFocusMode).
     protected String name;
     protected WordBank wordBank;
     protected TypingStats stats;
@@ -41,7 +41,7 @@ public abstract class GameMode {
     // Teks yang harus diketik pemain sekarang.
     public abstract String getCurrentTarget();
 
-    // Pemain selesai mengetik satu kata/baris/teks. true kalau benar.
+    // Pemain selesai mengetik teksnya. true kalau semua huruf benar.
     public abstract boolean submit(String typed);
 
     public abstract boolean isOver();
@@ -59,28 +59,18 @@ public abstract class GameMode {
     }
 
     // ---------- Method biasa yang BOLEH di-override ----------
-    // Isinya nilai default untuk mode "teks panjang" (Classic). Mode lain yang berbeda
-    // cukup meng-override method yang perlu saja.
+    // Isinya nilai untuk mode normal (tanpa huruf fokus).
+    // [MATERI: Polymorphism - runtime] LetterFocusMode meng-override kedua method ini.
+    // GamePanel cukup memanggil mode.getFocusLetter(); Java otomatis menjalankan versi milik
+    // objek aslinya. Jadi GamePanel tidak perlu mengecek "mode ini kelas apa?" (instanceof).
 
-    // true kalau pemain mengirim satu kata setiap kali dengan Spasi/Enter (Time Attack, Survival).
-    // false kalau pemain mengetik satu teks utuh (Classic).
-    public boolean isWordMode() {
-        return false;
+    // Huruf yang sedang dilatih (huruf kecil), atau NO_FOCUS kalau tidak ada.
+    public char getFocusLetter() {
+        return NO_FOCUS;
     }
 
-    // true kalau pemain mengetik satu baris lalu mengirimnya dengan Enter (Code Mode).
-    // false kalau teks langsung selesai begitu panjang ketikan sama dengan target (Classic).
-    public boolean isLineMode() {
-        return false;
-    }
-
-    // Kata-kata berikutnya yang ditampilkan abu-abu setelah target. Kosong kalau tidak ada.
-    public String getUpcomingText() {
-        return "";
-    }
-
-    // Info tambahan di pojok kanan atas layar game (misalnya nyawa). Kosong kalau tidak ada.
-    public String getStatusText() {
-        return "";
+    // Nilai yang disimpan di CSV dan ditampilkan di kolom Fokus: "Normal" atau huruf besar, misalnya "J".
+    public String getFocusLabel() {
+        return FOCUS_NORMAL;
     }
 }

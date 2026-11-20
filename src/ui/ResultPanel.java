@@ -15,8 +15,8 @@ import model.Player;
 import model.TypingStats;
 
 /*
- * ResultPanel: layar hasil setelah satu ronde selesai. Menampilkan skor, WPM, akurasi,
- * waktu, jumlah ketukan benar/salah, dan heatmap kesalahan di keyboard.
+ * ResultPanel: layar hasil setelah satu ronde selesai. Menampilkan fokus ronde ini (di judul),
+ * skor, WPM, akurasi, waktu, jumlah ketukan benar/salah, dan heatmap kesalahan di keyboard.
  * Owner: Person B
  * Materi: GUI (BorderLayout, GridLayout, label, tombol), String (String.format),
  *         Polymorphism runtime (mode.calculateScore())
@@ -38,8 +38,10 @@ public class ResultPanel extends JPanel {
     // Heatmap kesalahan (gambar keyboard berwarna).
     private KeyboardHeatmapPanel heatmapPanel;
 
-    // Nama mode ronde terakhir, dipakai tombol "Main lagi".
-    private String lastModeName;
+    // Huruf fokus ronde terakhir (atau GameMode.NO_FOCUS), dipakai tombol "Main lagi".
+    private char lastFocusLetter;
+    // "Normal" atau huruf fokus ronde terakhir, dipakai tombol "Leaderboard".
+    private String lastFocusLabel;
 
     public ResultPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
@@ -113,8 +115,8 @@ public class ResultPanel extends JPanel {
         JButton playAgainButton = new JButton("Main lagi");
         Theme.styleButton(playAgainButton);
         playAgainButton.addActionListener(e -> {
-            // Ronde BARU dengan mode yang sama (kata-katanya diacak ulang).
-            mainFrame.startGame(lastModeName);
+            // Ronde BARU dengan huruf fokus yang sama (kata-katanya diacak ulang).
+            mainFrame.startGame(lastFocusLetter);
         });
         panel.add(playAgainButton);
 
@@ -128,20 +130,23 @@ public class ResultPanel extends JPanel {
         JButton leaderboardButton = new JButton("Leaderboard");
         Theme.styleButton(leaderboardButton);
         leaderboardButton.addActionListener(e -> {
-            // Langsung buka tab mode yang baru dimainkan.
-            mainFrame.showLeaderboard(lastModeName);
+            // Langsung pilih filter untuk fokus yang baru dimainkan.
+            mainFrame.showLeaderboard(lastFocusLabel);
         });
         panel.add(leaderboardButton);
         return panel;
     }
 
     // Mengisi semua label dengan hasil ronde yang baru selesai.
-    // newPersonalBest = true kalau skor ini lebih tinggi dari semua skor pemain ini sebelumnya di mode ini.
+    // newPersonalBest = true kalau skor ini lebih tinggi dari semua skor pemain ini sebelumnya
+    // dengan fokus yang sama.
     public void showResult(GameMode mode, Player player, boolean newPersonalBest) {
-        lastModeName = mode.getName();
+        lastFocusLetter = mode.getFocusLetter();
+        lastFocusLabel = mode.getFocusLabel();
         TypingStats stats = mode.getStats();
 
-        titleLabel.setText("Hasil " + mode.getName() + " - " + player.getName());
+        // getName() = "Mode normal" atau misalnya "Fokus huruf J", jadi fokusnya terlihat di judul.
+        titleLabel.setText("Hasil " + player.getName() + " - " + mode.getName());
         if (newPersonalBest) {
             personalBestLabel.setText("Rekor pribadi baru!");
         } else {

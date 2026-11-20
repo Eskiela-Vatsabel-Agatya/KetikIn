@@ -2,7 +2,9 @@
 
 A typing trainer game written in Java Swing. Final project for Pemrograman Berorientasi Objek (PBO), class B, 2026.
 
-Modes: Classic, Time Attack, Survival and Code Mode, with live WPM and accuracy, a mistake heatmap and a leaderboard.
+KetikIn helps you train the letters you are weak at. Pick **Normal** (30 random words) or a **focus letter A–Z**:
+then 24 of the 30 words contain that letter, and it is shown in bold. You get live WPM and accuracy, green/red
+coloring, a mistake heatmap on a keyboard, and a leaderboard you can filter by focus.
 
 > Work in progress. This README is completed in Phase 7.
 
@@ -32,11 +34,11 @@ You can also double-click `dist\KetikIn.jar`.
 ```
 src/app       Main (entry point)
 src/model     Player, TypingStats, ScoreEntry
-src/mode      GameMode and the four modes
+src/mode      GameMode, ClassicMode (Normal), LetterFocusMode
 src/data      word bank, leaderboard file, custom exceptions
 src/engine    timer thread
 src/ui        Swing screens and theme
-src/resources word list and code snippets (packed into the jar)
+src/resources word list (packed into the jar)
 test          SelfTest (plain Java, no JUnit)
 docs          notes and guides
 ```

@@ -29,7 +29,10 @@ public class LeaderboardStore implements DataStore<ScoreEntry> {
 
     public static final String FOLDER_NAME = ".ketikin";
     public static final String FILE_NAME = "leaderboard.csv";
+    // Kolom "mode" berisi fokus permainan: "Normal" atau satu huruf, misalnya "J".
     public static final String CSV_HEADER = "name,mode,score,wpm,accuracy,date";
+    // Pilihan filter di Leaderboard yang menampilkan skor dari semua fokus.
+    public static final String FILTER_ALL = "Semua";
 
     private File file;
     // Pesan error terakhir (null kalau tidak ada error), supaya UI bisa menampilkannya.
@@ -137,37 +140,41 @@ public class LeaderboardStore implements DataStore<ScoreEntry> {
         return saveAll(entries);
     }
 
-    // Skor terbaik untuk satu mode, sudah diurutkan, maksimal 'limit' baris.
-    public List<ScoreEntry> getTop(String modeName, int limit) {
+    // Skor terbaik untuk satu pilihan filter, sudah diurutkan, maksimal 'limit' baris.
+    // focus = FILTER_ALL ("Semua"), "Normal", atau satu huruf seperti "J".
+    public List<ScoreEntry> getTop(String focus, int limit) {
         List<ScoreEntry> allEntries = loadAll();
 
-        // Langkah 1: ambil hanya skor dari mode ini.
-        ArrayList<ScoreEntry> modeEntries = new ArrayList<>();
+        // Langkah 1: ambil hanya skor yang cocok dengan filter. "Semua" mengambil semuanya.
+        // Baris lama dari mode yang sudah dihapus (misalnya "Survival") tidak cocok dengan
+        // "Normal" atau huruf apa pun, jadi hanya muncul di "Semua".
+        ArrayList<ScoreEntry> matchingEntries = new ArrayList<>();
         for (ScoreEntry entry : allEntries) {
-            if (entry.getMode().equals(modeName)) {
-                modeEntries.add(entry);
+            if (focus.equals(FILTER_ALL) || entry.getMode().equals(focus)) {
+                matchingEntries.add(entry);
             }
         }
 
         // Langkah 2: urutkan. Collections.sort memakai compareTo milik ScoreEntry
         // (skor tertinggi dulu; kalau sama, WPM tertinggi dulu).
-        Collections.sort(modeEntries);
+        Collections.sort(matchingEntries);
 
         // Langkah 3: ambil paling banyak 'limit' skor pertama.
         ArrayList<ScoreEntry> top = new ArrayList<>();
-        for (int i = 0; i < modeEntries.size() && i < limit; i++) {
-            top.add(modeEntries.get(i));
+        for (int i = 0; i < matchingEntries.size() && i < limit; i++) {
+            top.add(matchingEntries.get(i));
         }
         return top;
     }
 
-    // Skor terbaik seorang pemain di satu mode, atau -1 kalau ia belum pernah main mode itu.
-    public int getPersonalBest(String playerName, String modeName) {
+    // Skor terbaik seorang pemain untuk satu fokus ("Normal" atau huruf), atau -1 kalau
+    // ia belum pernah main dengan fokus itu. Jadi rekor J hanya dibandingkan dengan rekor J.
+    public int getPersonalBest(String playerName, String focus) {
         int best = -1;
         for (ScoreEntry entry : loadAll()) {
             boolean samePlayer = entry.getName().equals(playerName);
-            boolean sameMode = entry.getMode().equals(modeName);
-            if (samePlayer && sameMode && entry.getScore() > best) {
+            boolean sameFocus = entry.getMode().equals(focus);
+            if (samePlayer && sameFocus && entry.getScore() > best) {
                 best = entry.getScore();
             }
         }

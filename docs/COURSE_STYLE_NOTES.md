@@ -27,8 +27,9 @@ Where a feature is *not* in the slides, it is marked **(not in slides)**.
   `FlowLayout` + nested panels. **No `null` layout, no `BoxLayout`.**
 - The slides build the `JFrame` directly inside `main`. → KetikIn uses `MainFrame extends JFrame` (inheritance,
   Week 4), which is the same idea organized as a class.
-- **(not in slides or practicum)** `CardLayout` and `JTabbedPane`. Required by the brief (screen switching,
-  one leaderboard tab per mode). → kept, and listed in `CODE_GUIDE.md` under "Things outside the course material".
+- **(not in slides or practicum)** `CardLayout`. Required by the brief (screen switching). → kept, and listed in
+  `CODE_GUIDE.md` under "Things outside the course material". (`JTabbedPane` was used until the pivot; the
+  leaderboard now uses one `JTable` with a `JComboBox` filter.)
 - **JTable (practicum "JTable & Collections"):** `new DefaultTableModel(kolom, 0)` (column names + 0 rows),
   then filled row by row from an `ArrayList`. → `LeaderboardPanel` uses exactly this pattern
   (`addRow` in a plain `for` loop).
@@ -36,7 +37,7 @@ Where a feature is *not* in the slides, it is marked **(not in slides)**.
   page only *names* `DocumentListener` ("mendeteksi perubahan teks pada komponen input"), with no example.
   `KeyListener` is not shown anywhere. → KetikIn keeps a **`KeyListener` written as an anonymous inner class**,
   reading the text in `keyReleased`. Reason: unlike `DocumentListener`, it lets us safely change the text field
-  from inside the listener (clearing it after Space/Enter); a `DocumentListener` that changes its own document
+  from inside the listener (cutting off letters typed past the end); a `DocumentListener` that changes its own document
   throws an exception. `keyTyped` and `keyPressed` stay empty with a comment. Listed in `CODE_GUIDE.md` under
   "Things outside the course material".
 - **Input validation (practicum "Input Processing & Validation"):** `JOptionPane.showMessageDialog`, `trim()`,
@@ -80,7 +81,7 @@ Where a feature is *not* in the slides, it is marked **(not in slides)**.
 - `IllegalArgumentException` is thrown in the slide example (`throw new IllegalArgumentException("Invalid age")`)
   → `ScoreEntry.fromCsvLine` throws it for a broken CSV line.
 - `assert condition : "message";` and `java -ea` are shown. Rule from the slides: **assert = internal assumptions,
-  never user-input validation.** → assertions only on invariants (accuracy 0–100, lives ≥ 0), names are validated
+  never user-input validation.** → assertions only on invariants (accuracy 0–100, word list not empty), names are validated
   with exceptions. `run.bat` uses `-ea`.
 
 ## Generics & Collections (Week 10)
@@ -111,15 +112,15 @@ Where a feature is *not* in the slides, it is marked **(not in slides)**.
 ## OOP pillars (Week 1–7)
 
 - Inheritance (Week 4): `extends`, `@Override`, `super.method()`, `super(...)` in constructors, single /
-  **multilevel** / hierarchical inheritance. → `GameMode` ← `ClassicMode` ← `CodeMode` (multilevel),
-  `GameMode` ← Classic/TimeAttack/Survival (hierarchical).
+  **multilevel** / hierarchical inheritance. → `GameMode` ← `ClassicMode` ← `LetterFocusMode` (multilevel).
+  (Hierarchical inheritance ended with the pivot, when Time Attack and Survival were removed.)
 - Encapsulation (Week 5): `private` fields + public getters/setters, the four access modifiers including
   `protected` and default. → `Player`, `TypingStats`; `protected` fields in `GameMode` for subclasses.
 - Polymorphism (Week 6): runtime = overriding + **upcasting** (`Animal myDog = new Dog();`);
   compile-time = **method overloading**. → `GameMode mode = new ClassicMode(...)`; overloaded `ScoreEntry`
   constructors and `getWpm()` / `getWpm(long)`.
 - Abstraction (Week 7): `abstract class` with abstract + concrete methods and constructors; `interface` with
-  `implements`. Slides mention "Java 8+ allows default methods". → `abstract class GameMode`, `interface Timed`,
+  `implements`. Slides mention "Java 8+ allows default methods". → `abstract class GameMode`,
   `interface TimerListener`, `interface DataStore<T>`. **No default methods** (brief forbids them).
 - Variables (Week 3): local / instance / **static** variables, wrapper classes, **autoboxing/unboxing**.
   → `public static final` constants (e.g. in `Theme`); `HashMap<Character, Integer>` relies on autoboxing

@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.Locale;
 
 /*
- * ScoreEntry: satu baris di leaderboard (nama, mode, skor, WPM, akurasi, tanggal).
+ * ScoreEntry: satu baris di leaderboard (nama, fokus, skor, WPM, akurasi, tanggal).
  * Bisa diubah ke baris CSV dan dibaca kembali dari baris CSV, dan bisa diurutkan
  * (skor tertinggi dulu) karena mengimplementasikan Comparable.
  * Owner: Person C
@@ -21,6 +21,8 @@ public class ScoreEntry implements Comparable<ScoreEntry> {
     public static final String DATE_PATTERN = "yyyy-MM-dd HH:mm";
 
     private String name;
+    // Fokus permainan: "Normal" atau satu huruf, misalnya "J". Namanya tetap "mode"
+    // karena kolom CSV-nya bernama "mode".
     private String mode;
     private int score;
     private double wpm;
@@ -76,7 +78,7 @@ public class ScoreEntry implements Comparable<ScoreEntry> {
     }
 
     // Mengubah objek ini menjadi satu baris CSV, contoh:
-    // Budi,Classic,512,64.30,97.50,2026-11-20 15:30
+    // Budi,J,512,64.30,97.50,2026-11-20 15:30
     // Locale.US dipakai supaya desimal selalu memakai TITIK (64.30). Di komputer dengan
     // setelan Indonesia, String.format biasa bisa menulis KOMA (64,30), dan itu akan
     // merusak CSV karena koma adalah pemisah kolom.

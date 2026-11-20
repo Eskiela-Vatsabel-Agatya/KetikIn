@@ -18,8 +18,7 @@ import javax.swing.SwingConstants;
 /*
  * KeyboardHeatmapPanel: gambar keyboard QWERTY dari JLabel. Semakin sering sebuah huruf
  * salah diketik, semakin merah tombolnya (putih = tidak pernah salah).
- * Di bawahnya ada tulisan 3 huruf yang paling sering salah, dan simbol lain yang salah
- * (misalnya dari Code Mode) yang tidak ada di gambar keyboard.
+ * Di bawahnya ada tulisan 3 huruf yang paling sering salah.
  * Owner: Person B
  * Materi: GUI (GridLayout, FlowLayout, JLabel), Collections (HashMap, Map.Entry, ArrayList),
  *         Variables (static final / konstanta)
@@ -37,9 +36,8 @@ public class KeyboardHeatmapPanel extends JPanel {
     private static final int KEY_GAP = 4;
     // Lebar tombol spasi = selebar 6 tombol biasa.
     private static final int SPACE_BAR_KEYS = 6;
-    // Berapa huruf yang ditampilkan di "Paling sering salah" dan "Simbol lain".
+    // Berapa huruf yang ditampilkan di "Paling sering salah".
     private static final int TOP_KEY_COUNT = 3;
-    private static final int TOP_OTHER_COUNT = 5;
     // Kalau tombol sudah lebih merah dari setengah, hurufnya ditulis putih supaya tetap terbaca.
     private static final double DARK_KEY_RATIO = 0.5;
 
@@ -48,7 +46,6 @@ public class KeyboardHeatmapPanel extends JPanel {
     // tombol untuk huruf 'e' dengan keyLabels.get('e'), tanpa mencari satu per satu.
     private HashMap<Character, JLabel> keyLabels;
     private JLabel topMissedLabel;
-    private JLabel otherMissedLabel;
 
     public KeyboardHeatmapPanel() {
         keyLabels = new HashMap<>();
@@ -59,7 +56,8 @@ public class KeyboardHeatmapPanel extends JPanel {
 
         add(Theme.createLabel("Peta kesalahan", Theme.HEADING_FONT, Theme.TEXT_MUTED), BorderLayout.NORTH);
         add(createKeyboard(), BorderLayout.CENTER);
-        add(createInfoPanel(), BorderLayout.SOUTH);
+        topMissedLabel = Theme.createLabel(" ", Theme.SMALL_FONT, Theme.TEXT);
+        add(topMissedLabel, BorderLayout.SOUTH);
     }
 
     // ---------------------------------------------------------------
@@ -119,17 +117,6 @@ public class KeyboardHeatmapPanel extends JPanel {
         return label;
     }
 
-    // Dua baris tulisan di bawah keyboard.
-    private JPanel createInfoPanel() {
-        JPanel panel = new JPanel(new GridLayout(2, 1));
-        panel.setOpaque(false);
-        topMissedLabel = Theme.createLabel(" ", Theme.SMALL_FONT, Theme.TEXT);
-        otherMissedLabel = Theme.createLabel(" ", Theme.SMALL_FONT, Theme.TEXT_MUTED);
-        panel.add(topMissedLabel);
-        panel.add(otherMissedLabel);
-        return panel;
-    }
-
     // ---------------------------------------------------------------
     // Mewarnai
     // ---------------------------------------------------------------
@@ -151,10 +138,8 @@ public class KeyboardHeatmapPanel extends JPanel {
 
         if (mistakes.isEmpty()) {
             topMissedLabel.setText("Tidak ada kesalahan. Mantap!");
-            otherMissedLabel.setText(" ");
         } else {
             topMissedLabel.setText("Paling sering salah: " + buildTopText(mistakes, TOP_KEY_COUNT));
-            showOtherMistakes(mistakes);
         }
     }
 
@@ -213,23 +198,6 @@ public class KeyboardHeatmapPanel extends JPanel {
     // Tulisan di bawah keyboard
     // ---------------------------------------------------------------
 
-    // Simbol yang salah tapi tidak ada di gambar keyboard (misalnya { ; ( dari Code Mode).
-    private void showOtherMistakes(HashMap<Character, Integer> mistakes) {
-        // Kumpulkan dulu ke map baru, hanya huruf yang TIDAK ada di keyLabels.
-        HashMap<Character, Integer> others = new HashMap<>();
-        for (Map.Entry<Character, Integer> entry : mistakes.entrySet()) {
-            if (!keyLabels.containsKey(entry.getKey())) {
-                others.put(entry.getKey(), entry.getValue());
-            }
-        }
-
-        if (others.isEmpty()) {
-            otherMissedLabel.setText(" ");
-        } else {
-            otherMissedLabel.setText("Simbol lain: " + buildTopText(others, TOP_OTHER_COUNT));
-        }
-    }
-
     // Membuat tulisan seperti "'e' (4), 'a' (3), 'r' (2)" dari huruf-huruf yang paling sering salah.
     // Caranya sederhana: ulangi 'limit' kali, dan setiap kali cari huruf dengan jumlah
     // terbanyak yang BELUM dipilih.
@@ -261,8 +229,7 @@ public class KeyboardHeatmapPanel extends JPanel {
         return text.toString();
     }
 
-    // Huruf ditulis di antara tanda kutip, contoh 'e' atau '(', supaya simbol seperti ( dan )
-    // tidak tertukar dengan tanda kurung di "(4)". Spasi tidak terlihat, jadi ditulis "spasi".
+    // Huruf ditulis di antara tanda kutip, contoh 'e'. Spasi tidak terlihat, jadi ditulis "spasi".
     private String displayKey(char key) {
         if (key == ' ') {
             return "spasi";

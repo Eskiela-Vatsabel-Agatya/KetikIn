@@ -8,7 +8,7 @@ package data;
  */
 // [MATERI: Exception - custom exception]
 // Kita pakai "extends Exception" (checked exception), bukan RuntimeException.
-// Artinya compiler MEMAKSA pemanggil loadWords()/loadSnippets() untuk menangani error ini
+// Artinya compiler MEMAKSA pemanggil loadWords() untuk menangani error ini
 // (try/catch atau throws). Jadi tidak mungkin ada yang lupa bahwa file kata bisa gagal dibaca.
 public class WordFileException extends Exception {
 

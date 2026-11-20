@@ -3,11 +3,12 @@ package mode;
 import data.WordBank;
 
 /*
- * ClassicMode: pemain mengetik satu paragraf berisi 30 kata acak. Selesai ketika
+ * ClassicMode: mode normal. Pemain mengetik satu paragraf berisi 30 kata acak. Selesai ketika
  * panjang ketikan sama dengan panjang teks target. Timer menghitung naik.
  * Skor = WPM x akurasi / 100 x 10, dibulatkan.
  * Owner: Person A
- * Materi: Inheritance (extends GameMode, super), Polymorphism runtime (@Override)
+ * Materi: Inheritance (extends GameMode, super), Polymorphism runtime (@Override),
+ *         Polymorphism compile-time (constructor overloading)
  */
 // [MATERI: Inheritance] ClassicMode adalah anak dari GameMode.
 // Ia mewarisi field name, wordBank, stats dan method getName(), getStats(),
@@ -15,22 +16,24 @@ import data.WordBank;
 public class ClassicMode extends GameMode {
 
     public static final int WORD_COUNT = 30;
+    // Nama mode ini, ditampilkan di layar game dan layar hasil.
+    public static final String NAME = "Mode normal";
     private static final double SCORE_FACTOR = 10;
 
-    // protected: nanti CodeMode (anak dari ClassicMode) juga bisa memakainya.
+    // protected: LetterFocusMode (anak dari ClassicMode) juga bisa memakainya.
     protected String targetText;
     protected boolean finished;
 
     public ClassicMode(WordBank wordBank) {
         // super(...) memanggil constructor GameMode dulu (mengisi name, wordBank, stats).
-        super(MODE_CLASSIC, wordBank);
+        super(NAME, wordBank);
         targetText = wordBank.randomWords(WORD_COUNT);
         finished = false;
     }
 
-    // Constructor kedua, KHUSUS untuk kelas anak (CodeMode).
+    // Constructor kedua, KHUSUS untuk kelas anak (LetterFocusMode).
     // Bedanya dengan constructor di atas: nama mode bisa dipilih sendiri, dan teks target
-    // belum diisi (CodeMode mengisinya dengan baris kode, bukan kata acak).
+    // belum diisi (LetterFocusMode memilih kata-katanya dengan caranya sendiri).
     // protected = hanya kelas anak (dan kelas di package yang sama) yang boleh memakainya.
     // [MATERI: Polymorphism - compile-time] dua constructor dengan parameter berbeda = overloading.
     protected ClassicMode(String modeName, WordBank wordBank) {
@@ -52,7 +55,7 @@ public class ClassicMode extends GameMode {
     }
 
     // Dipanggil oleh GamePanel ketika panjang ketikan sudah sama dengan panjang target.
-    // Ronde Classic langsung selesai. Hasilnya true kalau semua huruf benar.
+    // Ronde langsung selesai. Hasilnya true kalau semua huruf benar.
     @Override
     public boolean submit(String typed) {
         finished = true;

@@ -10,10 +10,8 @@ import data.LeaderboardStore;
 import data.WordBank;
 import data.WordFileException;
 import mode.ClassicMode;
-import mode.CodeMode;
 import mode.GameMode;
-import mode.SurvivalMode;
-import mode.TimeAttackMode;
+import mode.LetterFocusMode;
 import model.Player;
 import model.ScoreEntry;
 
@@ -75,14 +73,13 @@ public class MainFrame extends JFrame {
         }
     }
 
-    // Memuat file kata dan potongan kode. Mengembalikan false (dan menampilkan pesan) kalau gagal.
+    // Memuat file kata. Mengembalikan false (dan menampilkan pesan) kalau gagal.
     private boolean loadWordBank() {
         wordBank = new WordBank();
-        // [MATERI: Exception] loadWords/loadSnippets bisa melempar WordFileException (checked),
+        // [MATERI: Exception] loadWords bisa melempar WordFileException (checked),
         // jadi compiler mewajibkan try/catch di sini.
         try {
             wordBank.loadWords(WordBank.WORDS_PATH);
-            wordBank.loadSnippets(WordBank.SNIPPETS_PATH);
             return true;
         } catch (WordFileException e) {
             // Tanpa daftar kata, permainan tidak bisa berjalan. Beri tahu pemain dengan sopan.
@@ -130,31 +127,20 @@ public class MainFrame extends JFrame {
         showScreen(MENU);
     }
 
-    // Membuat objek mode baru berdasarkan namanya.
+    // Membuat objek mode baru untuk huruf fokus yang dipilih.
     // [MATERI: Polymorphism - runtime] tipe kembaliannya GameMode, tapi objek aslinya
-    // bisa ClassicMode, TimeAttackMode, dan seterusnya (upcasting).
-    private GameMode createMode(String modeName) {
-        if (modeName.equals(GameMode.MODE_CLASSIC)) {
+    // bisa ClassicMode atau LetterFocusMode (upcasting).
+    private GameMode createMode(char focusLetter) {
+        if (focusLetter == GameMode.NO_FOCUS) {
             return new ClassicMode(wordBank);
         }
-        if (modeName.equals(GameMode.MODE_TIME_ATTACK)) {
-            return new TimeAttackMode(wordBank);
-        }
-        if (modeName.equals(GameMode.MODE_SURVIVAL)) {
-            return new SurvivalMode(wordBank);
-        }
-        if (modeName.equals(GameMode.MODE_CODE)) {
-            return new CodeMode(wordBank);
-        }
-
-        // Nama mode tidak dikenal = salah di kode kita sendiri (bukan salah pemain).
-        // Lebih baik langsung error dengan pesan jelas daripada diam-diam memakai mode lain.
-        throw new IllegalArgumentException("Mode tidak dikenal: " + modeName);
+        return new LetterFocusMode(wordBank, focusLetter);
     }
 
-    // Memulai ronde baru untuk mode tertentu. Dipanggil dari menu dan dari tombol "Main lagi".
-    public void startGame(String modeName) {
-        GameMode mode = createMode(modeName);
+    // Memulai ronde baru. focusLetter = huruf yang dilatih, atau GameMode.NO_FOCUS untuk mode normal.
+    // Dipanggil dari menu dan dari tombol "Main lagi" (dengan huruf fokus yang sama).
+    public void startGame(char focusLetter) {
+        GameMode mode = createMode(focusLetter);
         // Tampilkan layar game dulu, baru mulai ronde, supaya kotak ketik bisa langsung diberi fokus.
         showScreen(GAME);
         gamePanel.startGame(mode);
@@ -165,11 +151,15 @@ public class MainFrame extends JFrame {
     public void showResult(GameMode mode) {
         int score = mode.calculateScore();
 
+        // getFocusLabel() = "Normal" atau huruf fokus, misalnya "J". Inilah yang disimpan di CSV.
+        String focus = mode.getFocusLabel();
+
         // Rekor lama dicari SEBELUM skor baru disimpan, supaya bisa dibandingkan.
-        int previousBest = leaderboardStore.getPersonalBest(player.getName(), mode.getName());
+        // Hanya dengan fokus yang sama: rekor J dibandingkan dengan rekor J.
+        int previousBest = leaderboardStore.getPersonalBest(player.getName(), focus);
 
         // Constructor ScoreEntry versi kedua: WPM, akurasi, dan tanggal diambil otomatis.
-        ScoreEntry entry = new ScoreEntry(player.getName(), mode.getName(), score, mode.getStats());
+        ScoreEntry entry = new ScoreEntry(player.getName(), focus, score, mode.getStats());
         // Disimpan langsung di EDT, tanpa thread tambahan: filenya hanya beberapa baris,
         // jadi menulisnya sangat cepat dan layar tidak sempat terasa macet.
         boolean saved = leaderboardStore.addScore(entry);
@@ -187,17 +177,16 @@ public class MainFrame extends JFrame {
     }
 
     // [MATERI: Polymorphism - compile-time] dua method showLeaderboard dengan parameter berbeda.
-    // Dari menu: tanpa parameter, tab pertama (Classic) yang terbuka.
+    // Dari menu: tanpa parameter, filter "Semua" yang dipilih.
     public void showLeaderboard() {
-        showLeaderboard(GameMode.MODE_CLASSIC);
+        showLeaderboard(LeaderboardStore.FILTER_ALL);
     }
 
-    // Dari layar hasil: tab mode yang baru saja dimainkan langsung terbuka.
-    public void showLeaderboard(String modeName) {
+    // Dari layar hasil: filter untuk fokus yang baru saja dimainkan (misalnya "J").
+    public void showLeaderboard(String focus) {
         showScreen(LEADERBOARD);
-        // Data dibaca ulang setiap kali layar ini dibuka, supaya skor terbaru ikut tampil.
-        leaderboardPanel.refresh();
-        leaderboardPanel.selectTab(modeName);
+        // Memilih filter juga membaca ulang data, supaya skor terbaru ikut tampil.
+        leaderboardPanel.showFilter(focus);
     }
 
     // Menampilkan dialog konfirmasi dengan tombol "Ya" dan "Tidak" (bahasa Indonesia).

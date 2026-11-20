@@ -12,17 +12,15 @@ import data.LeaderboardStore;
 import data.WordBank;
 import data.WordFileException;
 import mode.ClassicMode;
-import mode.CodeMode;
 import mode.GameMode;
-import mode.SurvivalMode;
-import mode.TimeAttackMode;
+import mode.LetterFocusMode;
 import model.Player;
 import model.ScoreEntry;
 import model.TypingStats;
 
 /*
  * SelfTest: program kecil untuk mengetes bagian non-GUI (Player, TypingStats, ScoreEntry,
- * WordBank, mode-mode permainan, LeaderboardStore) tanpa JUnit. Mencetak PASS/FAIL untuk setiap pengecekan, lalu jumlahnya.
+ * WordBank, ClassicMode, LetterFocusMode, LeaderboardStore) tanpa JUnit. Mencetak PASS/FAIL untuk setiap pengecekan, lalu jumlahnya.
  * Dijalankan dengan selftest.bat (atau: java -ea -cp out SelfTest).
  * Owner: Person A / B / C (masing-masing menulis tes untuk kelasnya sendiri)
  * Materi: Assertion, Exception (try/catch untuk exception yang DIHARAPKAN), Collections
@@ -42,8 +40,7 @@ public class SelfTest {
         testTypingStats();
         testScoreEntry();
         testWordBank();
-        testTimedModes();
-        testCodeMode();
+        testModes();
         testLeaderboardStore();
 
         System.out.println();
@@ -173,14 +170,14 @@ public class SelfTest {
     private static void testScoreEntry() {
         System.out.println("--- ScoreEntry ---");
 
-        ScoreEntry original = new ScoreEntry("Budi", "Time Attack", 350, 72.5, 96.25, "2026-11-20 15:30");
+        ScoreEntry original = new ScoreEntry("Budi", "J", 350, 72.5, 96.25, "2026-11-20 15:30");
         String line = original.toCsvLine();
         check("toCsvLine memakai titik untuk desimal: " + line,
-                line.equals("Budi,Time Attack,350,72.50,96.25,2026-11-20 15:30"));
+                line.equals("Budi,J,350,72.50,96.25,2026-11-20 15:30"));
 
         ScoreEntry copy = ScoreEntry.fromCsvLine(line);
         boolean sameValues = copy.getName().equals("Budi")
-                && copy.getMode().equals("Time Attack")
+                && copy.getMode().equals("J")
                 && copy.getScore() == 350
                 && isClose(copy.getWpm(), 72.5)
                 && isClose(copy.getAccuracy(), 96.25)
@@ -190,24 +187,24 @@ public class SelfTest {
         // Constructor kedua (dari TypingStats).
         TypingStats stats = new TypingStats();
         stats.recordKeystroke('a', 'a');
-        ScoreEntry fromStats = new ScoreEntry("Sari", "Classic", 10, stats);
+        ScoreEntry fromStats = new ScoreEntry("Sari", "Normal", 10, stats);
         check("constructor dari stats mengisi akurasi", isClose(fromStats.getAccuracy(), 100));
         check("constructor dari stats mengisi tanggal: " + fromStats.getDate(),
                 fromStats.getDate().length() == ScoreEntry.DATE_PATTERN.length());
 
         testSorting();
-        expectBadLine("Budi,Classic,100");                          // kolom kurang
-        expectBadLine("Budi,Classic,banyak,50.0,90.0,2026-11-20");  // skor bukan angka
-        expectBadLine("Budi,Classic,100,cepat,90.0,2026-11-20");    // WPM bukan angka
+        expectBadLine("Budi,Normal,100");                          // kolom kurang
+        expectBadLine("Budi,Normal,banyak,50.0,90.0,2026-11-20");  // skor bukan angka
+        expectBadLine("Budi,Normal,100,cepat,90.0,2026-11-20");    // WPM bukan angka
         System.out.println();
     }
 
     private static void testSorting() {
         ArrayList<ScoreEntry> list = new ArrayList<>();
-        list.add(new ScoreEntry("A", "Classic", 100, 40.0, 90.0, "-"));
-        list.add(new ScoreEntry("B", "Classic", 300, 50.0, 90.0, "-"));
-        list.add(new ScoreEntry("C", "Classic", 200, 70.0, 90.0, "-"));
-        list.add(new ScoreEntry("D", "Classic", 300, 60.0, 90.0, "-"));
+        list.add(new ScoreEntry("A", "Normal", 100, 40.0, 90.0, "-"));
+        list.add(new ScoreEntry("B", "Normal", 300, 50.0, 90.0, "-"));
+        list.add(new ScoreEntry("C", "Normal", 200, 70.0, 90.0, "-"));
+        list.add(new ScoreEntry("D", "Normal", 300, 60.0, 90.0, "-"));
 
         // Collections.sort memakai compareTo milik ScoreEntry.
         Collections.sort(list);
@@ -240,17 +237,23 @@ public class SelfTest {
         WordBank bank = new WordBank();
         try {
             bank.loadWords(WordBank.WORDS_PATH);
-            bank.loadSnippets(WordBank.SNIPPETS_PATH);
-            check("memuat minimal 250 kata (" + bank.getWordCount() + ")", bank.getWordCount() >= 250);
-            check("memuat minimal 12 potongan kode (" + bank.getSnippetCount() + ")",
-                    bank.getSnippetCount() >= 12);
+            check("memuat minimal 1500 kata (" + bank.getWordCount() + ")", bank.getWordCount() >= 1500);
 
             String fiveWords = bank.randomWords(5);
             check("randomWords(5) berisi 5 kata: \"" + fiveWords + "\"", fiveWords.split(" ").length == 5);
 
-            ArrayList<String> snippet = bank.randomSnippet();
-            check("potongan kode berisi 4 sampai 8 baris (" + snippet.size() + ")",
-                    snippet.size() >= 4 && snippet.size() <= 8);
+            // Setiap huruf a-z harus ada di minimal 40 kata, supaya latihan huruf apa pun
+            // (juga j, q, x, z) punya cukup banyak kata yang berbeda.
+            String fewLetters = "";
+            for (char c = 'a'; c <= 'z'; c++) {
+                int count = bank.wordsContaining(c).size();
+                if (count < 40) {
+                    fewLetters = fewLetters + c + "(" + count + ") ";
+                }
+            }
+            check("setiap huruf a-z ada di minimal 40 kata " + fewLetters, fewLetters.isEmpty());
+            check("wordsContaining('q') hanya berisi kata dengan q",
+                    allContain(bank.wordsContaining('q'), 'q'));
         } catch (WordFileException e) {
             check("file kata bisa dimuat (error: " + e.getMessage() + ")", false);
         }
@@ -265,12 +268,33 @@ public class SelfTest {
         System.out.println();
     }
 
+    // true kalau setiap kata di daftar berisi huruf letter.
+    private static boolean allContain(List<String> words, char letter) {
+        for (String word : words) {
+            if (word.indexOf(letter) < 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Berapa kata di dalam teks (dipisah spasi) yang berisi huruf letter.
+    private static int countWordsWith(String text, char letter) {
+        int count = 0;
+        for (String word : text.split(" ")) {
+            if (word.indexOf(letter) >= 0) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     // ---------------------------------------------------------------
-    // TimeAttackMode dan SurvivalMode (tanpa GUI, tanpa timer)
+    // ClassicMode dan LetterFocusMode (tanpa GUI, tanpa timer)
     // ---------------------------------------------------------------
 
-    private static void testTimedModes() {
-        System.out.println("--- Time Attack dan Survival ---");
+    private static void testModes() {
+        System.out.println("--- ClassicMode dan LetterFocusMode ---");
 
         WordBank bank = new WordBank();
         try {
@@ -280,85 +304,37 @@ public class SelfTest {
             return;
         }
 
-        // Time Attack: kata benar dihitung, kata salah tidak, waktu habis = selesai.
-        TimeAttackMode timeAttack = new TimeAttackMode(bank);
-        String firstWord = timeAttack.getCurrentTarget();
-        check("Time Attack: kata benar diterima", timeAttack.submit(firstWord));
-        check("Time Attack: kata salah ditolak", !timeAttack.submit("zzzzz"));
-        check("Time Attack: 1 kata benar", timeAttack.getCorrectWords() == 1);
-        check("Time Attack: ada kata berikutnya untuk ditampilkan",
-                timeAttack.getUpcomingText().split(" ").length == 4);
-        check("Time Attack: sisa waktu setelah 15 detik = 45 detik",
-                timeAttack.getTimeLeftMillis(15000) == 45000);
-        check("Time Attack: belum selesai sebelum waktu habis", !timeAttack.isOver());
-        timeAttack.onTimeUp();
-        check("Time Attack: selesai setelah onTimeUp()", timeAttack.isOver());
-
-        // Survival: 3 nyawa, salah atau waktu habis = nyawa -1.
-        SurvivalMode survival = new SurvivalMode(bank);
-        check("Survival: mulai dengan 3 nyawa", survival.getLives() == 3);
-        check("Survival: kata benar diterima", survival.submit(survival.getCurrentTarget()));
-        check("Survival: batas waktu turun 0.1 detik setelah kata benar",
-                survival.getTimeLimitMillis() == 4900);
-        survival.submit("zzzzz");
-        check("Survival: salah ketik = nyawa tinggal 2", survival.getLives() == 2);
-        survival.onTimeUp();
-        check("Survival: waktu habis = nyawa tinggal 1", survival.getLives() == 1);
-        check("Survival: belum selesai dengan 1 nyawa", !survival.isOver());
-        survival.onTimeUp();
-        check("Survival: selesai saat nyawa 0", survival.isOver());
-        check("Survival: skor = 1 kata x 15 + 0 huruf = 15", survival.calculateScore() == 15);
-        System.out.println();
-    }
-
-    // ---------------------------------------------------------------
-    // CodeMode (tanpa GUI)
-    // ---------------------------------------------------------------
-
-    private static void testCodeMode() {
-        System.out.println("--- Code Mode ---");
-
-        WordBank bank = new WordBank();
-        try {
-            bank.loadSnippets(WordBank.SNIPPETS_PATH);
-        } catch (WordFileException e) {
-            check("file potongan kode bisa dimuat (error: " + e.getMessage() + ")", false);
-            return;
-        }
-
         // Disimpan di variabel bertipe GameMode (upcasting), seperti di GamePanel.
-        GameMode mode = new CodeMode(bank);
-        check("Code: nama mode = " + GameMode.MODE_CODE, mode.getName().equals(GameMode.MODE_CODE));
-        check("Code: CodeMode juga sebuah ClassicMode (multi-level inheritance)", mode instanceof ClassicMode);
-        check("Code: Enter yang mengirim baris (isLineMode)", mode.isLineMode());
+        GameMode normal = new ClassicMode(bank);
+        check("Normal: 30 kata", normal.getCurrentTarget().split(" ").length == ClassicMode.WORD_COUNT);
+        check("Normal: tidak ada huruf fokus", normal.getFocusLetter() == GameMode.NO_FOCUS);
+        check("Normal: label fokus = Normal", normal.getFocusLabel().equals(GameMode.FOCUS_NORMAL));
+        check("Normal: belum selesai sebelum submit", !normal.isOver());
+        check("Normal: teks yang benar diterima", normal.submit(normal.getCurrentTarget()));
+        check("Normal: selesai setelah submit", normal.isOver());
 
-        CodeMode code = new CodeMode(bank);
-        check("Code: maksimal 5 baris per ronde (" + code.getLineCount() + ")",
-                code.getLineCount() >= 1 && code.getLineCount() <= CodeMode.LINES_PER_ROUND);
+        GameMode focusJ = new LetterFocusMode(bank, 'J');
+        String target = focusJ.getCurrentTarget();
+        check("Fokus J: nama = Fokus huruf J", focusJ.getName().equals("Fokus huruf J"));
+        check("Fokus J: LetterFocusMode juga sebuah ClassicMode (multi-level inheritance)",
+                focusJ instanceof ClassicMode);
+        check("Fokus J: getFocusLetter() = 'j' (huruf kecil)", focusJ.getFocusLetter() == 'j');
+        check("Fokus J: label fokus = J", focusJ.getFocusLabel().equals("J"));
+        check("Fokus J: 30 kata", target.split(" ").length == ClassicMode.WORD_COUNT);
+        int withJ = countWordsWith(target, 'j');
+        check("Fokus J: minimal 24 kata berisi j (" + withJ + ")", withJ >= LetterFocusMode.FOCUS_WORD_COUNT);
 
-        // Kirim semua baris dengan benar. Setiap baris tidak boleh diawali spasi (indentasi dibuang).
-        boolean allCorrect = true;
-        boolean noIndent = true;
-        int lineCount = code.getLineCount();
-        for (int i = 0; i < lineCount; i++) {
-            String line = code.getCurrentTarget();
-            if (line.isEmpty() || line.charAt(0) == ' ') {
-                noIndent = false;
-            }
-            if (!code.submit(line)) {
-                allCorrect = false;
+        // Semua huruf A-Z (termasuk Q, X, Z) bisa dipakai tanpa error.
+        String badLetters = "";
+        for (char c = 'A'; c <= 'Z'; c++) {
+            GameMode mode = new LetterFocusMode(bank, c);
+            char lower = Character.toLowerCase(c);
+            if (countWordsWith(mode.getCurrentTarget(), lower) < LetterFocusMode.FOCUS_WORD_COUNT) {
+                badLetters = badLetters + c;
             }
         }
-        check("Code: tidak ada baris yang diawali spasi", noIndent);
-        check("Code: semua baris yang benar diterima", allCorrect);
-        check("Code: selesai setelah baris terakhir", code.isOver());
-
-        CodeMode wrongCode = new CodeMode(bank);
-        check("Code: baris yang salah ditolak", !wrongCode.submit("ini bukan kode"));
-        check("Code: belum selesai setelah 1 baris", !wrongCode.isOver());
-
-        // Belum ada ketukan: WPM 0, jadi skor Classic 0, dan 0 x 1.5 = 0.
-        check("Code: skor 0 kalau belum mengetik", wrongCode.calculateScore() == 0);
+        check("Fokus A-Z: setiap huruf memberi minimal 24 kata berisi huruf itu " + badLetters,
+                badLetters.isEmpty());
         System.out.println();
     }
 
@@ -377,39 +353,44 @@ public class SelfTest {
         check("file belum ada -> leaderboard kosong, tanpa error",
                 store.loadAll().isEmpty() && store.getLastErrorMessage() == null);
 
-        store.addScore(new ScoreEntry("Andi", "Classic", 100, 40.0, 90.0, "2026-11-20 10:00"));
-        store.addScore(new ScoreEntry("Budi", "Classic", 300, 50.0, 95.0, "2026-11-20 10:05"));
-        store.addScore(new ScoreEntry("Cici", "Survival", 500, 60.0, 99.0, "2026-11-20 10:10"));
-        boolean saved = store.addScore(new ScoreEntry("Andi", "Classic", 200, 45.0, 92.0, "2026-11-20 10:15"));
+        store.addScore(new ScoreEntry("Andi", "Normal", 100, 40.0, 90.0, "2026-11-20 10:00"));
+        store.addScore(new ScoreEntry("Budi", "Normal", 300, 50.0, 95.0, "2026-11-20 10:05"));
+        store.addScore(new ScoreEntry("Cici", "J", 500, 60.0, 99.0, "2026-11-20 10:10"));
+        // Baris lama dari mode yang sudah dihapus: hanya boleh muncul di filter "Semua".
+        store.addScore(new ScoreEntry("Dodi", "Survival", 50, 30.0, 80.0, "2026-11-19 09:00"));
+        boolean saved = store.addScore(new ScoreEntry("Andi", "Normal", 200, 45.0, 92.0, "2026-11-20 10:15"));
         check("addScore berhasil menyimpan", saved);
-        check("4 skor tersimpan di file", store.loadAll().size() == 4);
+        check("5 skor tersimpan di file", store.loadAll().size() == 5);
 
-        List<ScoreEntry> topClassic = store.getTop("Classic", 10);
+        List<ScoreEntry> topNormal = store.getTop("Normal", 10);
         String order = "";
-        for (ScoreEntry entry : topClassic) {
+        for (ScoreEntry entry : topNormal) {
             order = order + entry.getScore() + " ";
         }
-        check("getTop Classic hanya berisi Classic, urut skor tertinggi: " + order,
+        check("getTop Normal hanya berisi Normal, urut skor tertinggi: " + order,
                 order.equals("300 200 100 "));
-        check("getTop membatasi jumlah baris (limit 2)", store.getTop("Classic", 2).size() == 2);
-        check("getTop Survival berisi 1 skor", store.getTop("Survival", 10).size() == 1);
-        check("rekor pribadi Andi di Classic = 200", store.getPersonalBest("Andi", "Classic") == 200);
-        check("rekor pribadi Andi di Survival = -1 (belum pernah main)",
-                store.getPersonalBest("Andi", "Survival") == -1);
+        check("getTop membatasi jumlah baris (limit 2)", store.getTop("Normal", 2).size() == 2);
+        check("getTop J berisi 1 skor", store.getTop("J", 10).size() == 1);
+        check("getTop Q kosong", store.getTop("Q", 10).isEmpty());
+        check("getTop Semua berisi 5 skor (juga baris lama Survival)",
+                store.getTop(LeaderboardStore.FILTER_ALL, 10).size() == 5);
+        check("rekor pribadi Andi di Normal = 200", store.getPersonalBest("Andi", "Normal") == 200);
+        check("rekor pribadi Andi di J = -1 (belum pernah main)",
+                store.getPersonalBest("Andi", "J") == -1);
 
         // Tambahkan baris rusak secara manual. Baris lain harus tetap terbaca.
         // FileWriter(file, true) = mode "append": menulis di akhir file, isi lama tidak dihapus.
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(testFile, true))) {
             writer.write("ini,baris,rusak");
             writer.newLine();
-            writer.write("Dodi,Classic,bukan_angka,50.0,90.0,2026-11-20 10:20");
+            writer.write("Dodi,Normal,bukan_angka,50.0,90.0,2026-11-20 10:20");
             writer.newLine();
         } catch (IOException e) {
             check("menulis baris rusak untuk tes (error: " + e.getMessage() + ")", false);
         }
         // Peringatan dicetak ke System.err, jadi di beberapa terminal bisa muncul di urutan lain.
         System.out.println("(Dua peringatan \"baris ... dilewati\" dari tes ini memang disengaja.)");
-        check("2 baris rusak dilewati, 4 skor lain tetap terbaca", store.loadAll().size() == 4);
+        check("2 baris rusak dilewati, 5 skor lain tetap terbaca", store.loadAll().size() == 5);
         check("baris rusak bukan error untuk seluruh file", store.getLastErrorMessage() == null);
 
         testUnreadableLeaderboard();
@@ -426,7 +407,7 @@ public class SelfTest {
         List<ScoreEntry> entries = store.loadAll();
         check("file tidak bisa dibaca -> daftar kosong + pesan error",
                 entries.isEmpty() && store.getLastErrorMessage() != null);
-        boolean saved = store.addScore(new ScoreEntry("Andi", "Classic", 100, 40.0, 90.0, "-"));
+        boolean saved = store.addScore(new ScoreEntry("Andi", "Normal", 100, 40.0, 90.0, "-"));
         check("file tidak bisa dibaca -> skor baru tidak disimpan (data lama aman)", !saved);
 
         folderAsFile.delete();
