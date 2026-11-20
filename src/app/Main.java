@@ -1,0 +1,30 @@
+package app;
+
+import javax.swing.SwingUtilities;
+
+import ui.MainFrame;
+
+/*
+ * Main: titik awal program KetikIn. Tugasnya hanya membuat jendela utama (MainFrame)
+ * dan menampilkannya.
+ * Owner: Person C
+ * Materi: GUI (Swing), Multithreading (Event Dispatch Thread), Interface (Runnable)
+ */
+public class Main {
+
+    public static void main(String[] args) {
+        // [MATERI: Multithreading - EDT]
+        // Swing tidak thread-safe: komponen Swing hanya boleh dibuat dan diubah oleh
+        // satu thread khusus, yaitu Event Dispatch Thread (EDT).
+        // Method main() berjalan di thread "main", bukan di EDT. Jadi kita titipkan
+        // pekerjaan membuat jendela ke EDT lewat invokeLater.
+        // Runnable di sini sama seperti di materi Multithreading: objek yang punya method run().
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                MainFrame frame = new MainFrame();
+                frame.setVisible(true);
+            }
+        });
+    }
+}
