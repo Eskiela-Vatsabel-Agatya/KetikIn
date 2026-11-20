@@ -103,13 +103,13 @@ public class MenuPanel extends JPanel {
 
         JButton timeAttackButton = new JButton(GameMode.MODE_TIME_ATTACK);
         timeAttackButton.addActionListener(e -> {
-            showComingSoon();
+            startMode(GameMode.MODE_TIME_ATTACK);
         });
         grid.add(createModeCard(timeAttackButton, "60 detik. Ketik kata sebanyak-banyaknya, Spasi untuk kirim."));
 
         JButton survivalButton = new JButton(GameMode.MODE_SURVIVAL);
         survivalButton.addActionListener(e -> {
-            showComingSoon();
+            startMode(GameMode.MODE_SURVIVAL);
         });
         grid.add(createModeCard(survivalButton, "5 detik per kata, 3 nyawa. Salah atau telat = nyawa hilang."));
 

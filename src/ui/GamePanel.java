@@ -12,20 +12,23 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 import engine.GameTimer;
 import engine.TimerListener;
 import mode.GameMode;
+import mode.Timed;
 import model.TypingStats;
 
 /*
  * GamePanel: layar permainan. Menampilkan teks target dengan warna hijau/merah,
  * kotak ketik, timer, WPM, akurasi, dan nyawa (khusus Survival).
- * Menerima detak dari GameTimer lewat interface TimerListener (Phase 4).
+ * Setiap ronde punya satu GameTimer (thread) yang memanggil onTick() setiap 100 ms.
  * Owner: Person A
  * Materi: GUI (layout, JTextField, KeyListener), Polymorphism runtime (variabel bertipe GameMode),
- *         String (StringBuilder, charAt, membangun HTML), Multithreading (EDT, Phase 4),
- *         Abstraction (implements TimerListener)
+ *         String (StringBuilder, charAt, indexOf, substring, membangun HTML),
+ *         Multithreading (GameTimer, EDT, invokeLater), Abstraction (implements TimerListener,
+ *         instanceof Timed)
  */
 public class GamePanel extends JPanel implements TimerListener {
 
@@ -41,6 +44,7 @@ public class GamePanel extends JPanel implements TimerListener {
     // GamePanel tidak tahu (dan tidak peduli) mode apa ini; ia hanya memanggil method GameMode,
     // dan Java menjalankan versi method milik objek aslinya.
     private GameMode mode;
+    // Timer ronde yang sedang berjalan (null kalau tidak ada ronde).
     private GameTimer timer;
 
     // Isi kotak ketik pada pengecekan sebelumnya. Dipakai untuk tahu berapa huruf BARU yang diketik.
@@ -48,10 +52,10 @@ public class GamePanel extends JPanel implements TimerListener {
 
     private JLabel modeLabel;
     private JLabel descriptionLabel;
+    private JLabel statusLabel;
     private JLabel timerLabel;
     private JLabel wpmLabel;
     private JLabel accuracyLabel;
-    private JLabel livesLabel;
     private JLabel targetLabel;
     private JTextField inputField;
 
@@ -71,7 +75,7 @@ public class GamePanel extends JPanel implements TimerListener {
     // Membuat tampilan
     // ---------------------------------------------------------------
 
-    // Bagian atas: nama mode di kiri, angka-angka (waktu, WPM, akurasi) di kanan.
+    // Bagian atas: nama mode di kiri, angka-angka (nyawa, waktu, WPM, akurasi) di kanan.
     private JPanel createTopBar() {
         JPanel bar = new JPanel(new BorderLayout());
         bar.setOpaque(false);
@@ -86,12 +90,12 @@ public class GamePanel extends JPanel implements TimerListener {
 
         JPanel numbers = new JPanel(new FlowLayout(FlowLayout.RIGHT, Theme.PADDING, 0));
         numbers.setOpaque(false);
-        livesLabel = Theme.createLabel("", Theme.HEADING_FONT, Theme.WRONG);
-        livesLabel.setVisible(false);   // hanya dipakai Survival (Phase 4)
+        // Info tambahan dari mode (misalnya nyawa di Survival). Disembunyikan kalau kosong.
+        statusLabel = Theme.createLabel("", Theme.HEADING_FONT, Theme.WRONG);
         timerLabel = Theme.createLabel("", Theme.HEADING_FONT, Theme.TEXT);
         wpmLabel = Theme.createLabel("", Theme.HEADING_FONT, Theme.TEXT);
         accuracyLabel = Theme.createLabel("", Theme.HEADING_FONT, Theme.TEXT);
-        numbers.add(livesLabel);
+        numbers.add(statusLabel);
         numbers.add(timerLabel);
         numbers.add(wpmLabel);
         numbers.add(accuracyLabel);
@@ -149,7 +153,15 @@ public class GamePanel extends JPanel implements TimerListener {
             @Override
             public void keyReleased(KeyEvent e) {
                 handleInput();
+                // Kembalikan kursor ke akhir teks. Jadi tombol panah kiri/kanan dan Home
+                // tidak bisa dipakai untuk menyisipkan huruf di tengah ketikan.
+                inputField.setCaretPosition(inputField.getText().length());
             }
+        });
+
+        // JTextField memanggil ActionListener ketika Enter ditekan.
+        inputField.addActionListener(e -> {
+            handleEnter();
         });
         panel.add(inputField, BorderLayout.CENTER);
 
@@ -163,11 +175,14 @@ public class GamePanel extends JPanel implements TimerListener {
     }
 
     // ---------------------------------------------------------------
-    // Jalannya permainan
+    // Mulai, selesai, keluar
     // ---------------------------------------------------------------
 
     // Memulai satu ronde dengan mode apa pun.
     public void startGame(GameMode newMode) {
+        // Timer ronde sebelumnya (kalau masih ada) dihentikan dulu.
+        stopTimer();
+
         mode = newMode;
         previousText = "";
         inputField.setText("");
@@ -179,8 +194,47 @@ public class GamePanel extends JPanel implements TimerListener {
 
         mode.getStats().start();
         refreshDisplay("");
+        updateTimeLabel(0);
+        wpmLabel.setText("WPM: 0");
         inputField.requestFocusInWindow();
+
+        // [MATERI: Multithreading] Setiap ronde membuat objek GameTimer BARU,
+        // karena sebuah Thread hanya bisa di-start() satu kali.
+        timer = new GameTimer(this);
+        timer.start();
     }
+
+    // Ronde selesai: hentikan timer dan hitungan waktu, lalu pindah ke layar hasil.
+    private void finishGame() {
+        stopTimer();
+        mode.getStats().stop();
+        mainFrame.showResult(mode);
+    }
+
+    // Tombol keluar: tanya konfirmasi, lalu kembali ke menu tanpa menyimpan skor.
+    private void quitGame() {
+        boolean yes = mainFrame.askConfirmation(
+                "Keluar dari permainan?\nSkor ronde ini tidak akan disimpan.", "Keluar ke Menu");
+        if (yes) {
+            stopTimer();
+            mode = null;   // ronde dibuang
+            mainFrame.showMenu();
+        }
+    }
+
+    // Menghentikan timer ronde ini (kalau ada).
+    private void stopTimer() {
+        if (timer != null) {
+            timer.stopTimer();
+            // null = tidak ada timer aktif. Detak yang masih "tertinggal" dari timer lama
+            // akan diabaikan di onTick (lihat penjelasan di sana).
+            timer = null;
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // Input dari keyboard
+    // ---------------------------------------------------------------
 
     // Dipanggil setiap kali tombol dilepas di kotak ketik.
     private void handleInput() {
@@ -188,7 +242,16 @@ public class GamePanel extends JPanel implements TimerListener {
         if (mode == null || mode.isOver()) {
             return;
         }
+        // isWordMode() di-override oleh Time Attack dan Survival (runtime polymorphism).
+        if (mode.isWordMode()) {
+            handleWordInput();
+        } else {
+            handleTextInput();
+        }
+    }
 
+    // Classic: satu teks panjang. Selesai ketika semua huruf sudah diketik.
+    private void handleTextInput() {
         String target = mode.getCurrentTarget();
         String typed = inputField.getText();
 
@@ -211,6 +274,73 @@ public class GamePanel extends JPanel implements TimerListener {
         }
     }
 
+    // Time Attack dan Survival: satu kata setiap kali, dikirim dengan Spasi.
+    // Spasi dicek PALING DULU, sebelum teks dipotong atau dihitung. Spasi sendiri tidak
+    // dihitung sebagai ketukan; ia hanya tanda "kata ini selesai".
+    private void handleWordInput() {
+        String typed = inputField.getText();
+
+        // Selama masih ada spasi, kata sebelum spasi dikirim.
+        // Biasanya hanya satu kali. Bisa lebih kalau pemain mengetik sangat cepat, sehingga
+        // huruf kata berikutnya sudah masuk sebelum event untuk Spasi sempat diproses.
+        int spaceIndex = typed.indexOf(' ');
+        while (spaceIndex >= 0) {
+            String word = typed.substring(0, spaceIndex);
+            // Catat dulu huruf kata ini yang belum sempat dicatat.
+            recordNewKeystrokes(word, mode.getCurrentTarget());
+            submitWord(word);
+            if (mode.isOver()) {
+                finishGame();
+                return;
+            }
+            // Sisa setelah spasi = awal kata berikutnya.
+            typed = typed.substring(spaceIndex + 1);
+            previousText = "";
+            spaceIndex = typed.indexOf(' ');
+        }
+
+        // Kalau ada kata yang dikirim, kotak ketik hanya berisi sisa ketikannya.
+        if (!typed.equals(inputField.getText())) {
+            inputField.setText(typed);
+        }
+        recordNewKeystrokes(typed, mode.getCurrentTarget());
+        previousText = typed;
+        refreshDisplay(typed);
+    }
+
+    // Enter ditekan. Di Time Attack dan Survival, Enter sama dengan Spasi: kirim kata sekarang.
+    // Di Classic, Enter tidak melakukan apa-apa. (Code Mode memakai Enter di Phase 5.)
+    private void handleEnter() {
+        if (mode == null || mode.isOver() || !mode.isWordMode()) {
+            return;
+        }
+        String typed = inputField.getText();
+        recordNewKeystrokes(typed, mode.getCurrentTarget());
+        submitWord(typed);
+        if (mode.isOver()) {
+            finishGame();
+            return;
+        }
+        clearInput();
+    }
+
+    // Mengirim satu kata ke mode. trim() membuang spasi yang mungkin tersisa.
+    // Kata kosong (misalnya Spasi ditekan di kotak yang masih kosong) tidak dikirim.
+    private void submitWord(String word) {
+        String cleanWord = word.trim();
+        if (cleanWord.isEmpty()) {
+            return;
+        }
+        mode.submit(cleanWord);
+    }
+
+    // Mengosongkan kotak ketik dan menampilkan target yang baru.
+    private void clearInput() {
+        inputField.setText("");
+        previousText = "";
+        refreshDisplay("");
+    }
+
     // Mencatat huruf-huruf BARU ke TypingStats.
     // Hanya dihitung kalau teks bertambah panjang. Backspace membuat teks lebih pendek,
     // jadi Backspace tidak pernah dihitung sebagai ketukan.
@@ -222,43 +352,105 @@ public class GamePanel extends JPanel implements TimerListener {
         }
         TypingStats stats = mode.getStats();
         for (int i = previousText.length(); i < typed.length(); i++) {
-            stats.recordKeystroke(typed.charAt(i), target.charAt(i));
+            stats.recordKeystroke(typed.charAt(i), expectedCharAt(target, i));
         }
     }
 
-    // Menggambar ulang teks berwarna dan angka-angka statistik.
-    private void refreshDisplay(String typed) {
-        targetLabel.setText(buildColoredHtml(mode.getCurrentTarget(), typed));
-        updateStatsLabels();
+    // Huruf yang seharusnya diketik di posisi index.
+    // Di mode kata, pemain bisa mengetik lebih panjang dari kata targetnya. Di posisi itu
+    // seharusnya ia menekan Spasi, jadi huruf yang diharapkan adalah spasi.
+    private char expectedCharAt(String target, int index) {
+        if (index < target.length()) {
+            return target.charAt(index);
+        }
+        return ' ';
     }
 
-    // Memperbarui label waktu, WPM, dan akurasi.
-    // (Di Phase 4, waktu dan WPM juga diperbarui oleh timer setiap 100 ms.)
-    private void updateStatsLabels() {
+    // ---------------------------------------------------------------
+    // Tampilan
+    // ---------------------------------------------------------------
+
+    // Menggambar ulang teks berwarna, info mode, dan akurasi/WPM.
+    private void refreshDisplay(String typed) {
+        targetLabel.setText(buildColoredHtml(mode.getCurrentTarget(), typed, mode.getUpcomingText()));
+
+        // getStatusText() di-override oleh Survival (nyawa). Mode lain mengembalikan "".
+        String status = mode.getStatusText();
+        statusLabel.setText(status);
+        statusLabel.setVisible(!status.isEmpty());
+
         TypingStats stats = mode.getStats();
-        double seconds = stats.getElapsedMillis() / MILLIS_PER_SECOND;
-        // [MATERI: String - format] %.1f = 1 angka di belakang koma, %% = tanda persen.
-        timerLabel.setText(String.format("Waktu: %.1f s", seconds));
+        // [MATERI: String - format] %.0f = tanpa angka di belakang koma, %% = tanda persen.
         wpmLabel.setText(String.format("WPM: %.0f", stats.getWpm()));
         accuracyLabel.setText(String.format("Akurasi: %.1f%%", stats.getAccuracy()));
     }
 
-    // Ronde selesai: hentikan hitungan waktu, lalu pindah ke layar hasil.
-    private void finishGame() {
-        stopTimer();
-        mode.getStats().stop();
-        mainFrame.showResult(mode);
+    // Classic menampilkan waktu yang berjalan naik. Mode dengan batas waktu menampilkan sisa waktu.
+    private void updateTimeLabel(long elapsedMillis) {
+        // [MATERI: Abstraction - interface] instanceof mengecek apakah objek mode ini
+        // mengimplementasikan interface Timed. Kalau ya, kita "cast" (ubah tipe variabelnya)
+        // ke Timed supaya method milik Timed bisa dipanggil. Objeknya sendiri tetap sama.
+        if (mode instanceof Timed) {
+            Timed timedMode = (Timed) mode;
+            long timeLeftMillis = timedMode.getTimeLeftMillis(elapsedMillis);
+            if (timeLeftMillis < 0) {
+                timeLeftMillis = 0;
+            }
+            timerLabel.setText(String.format("Sisa: %.1f s", timeLeftMillis / MILLIS_PER_SECOND));
+        } else {
+            timerLabel.setText(String.format("Waktu: %.1f s", elapsedMillis / MILLIS_PER_SECOND));
+        }
     }
 
-    // Tombol keluar: tanya konfirmasi, lalu kembali ke menu tanpa menyimpan skor.
-    private void quitGame() {
-        boolean yes = mainFrame.askConfirmation(
-                "Keluar dari permainan?\nSkor ronde ini tidak akan disimpan.", "Keluar ke Menu");
-        if (yes) {
-            stopTimer();
-            mode = null;   // ronde dibuang
-            mainFrame.showMenu();
+    // ---------------------------------------------------------------
+    // Timer
+    // ---------------------------------------------------------------
+
+    // Dari interface TimerListener. PENTING: method ini dijalankan oleh thread TIMER, bukan oleh EDT.
+    // [MATERI: Multithreading - EDT]
+    // Swing tidak thread-safe: hanya Event Dispatch Thread (EDT) yang boleh mengubah komponen.
+    // Jadi di sini kita TIDAK menyentuh label sama sekali. Pekerjaannya dititipkan ke EDT
+    // lewat SwingUtilities.invokeLater, dan EDT akan menjalankannya sesaat kemudian.
+    // final: supaya variabel ini boleh dipakai di dalam anonymous class di bawah.
+    @Override
+    public void onTick(final long elapsedMillis) {
+        // Thread yang sedang menjalankan method ini = thread timer yang mengirim detak ini.
+        final Thread tickingTimer = Thread.currentThread();
+
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                // Detak "terlambat": timer bisa saja sudah menitipkan detak ini ke EDT tepat
+                // sebelum ronde selesai, dihentikan, atau diganti ronde baru. Kalau detak ini
+                // bukan dari timer ronde sekarang, atau ronde sudah selesai, abaikan saja.
+                // Tanpa pengecekan ini, detak lama bisa mengubah layar ronde baru, atau
+                // memanggil finishGame() dua kali.
+                if (tickingTimer != timer || mode == null || mode.isOver()) {
+                    return;
+                }
+                handleTick(elapsedMillis);
+            }
+        });
+    }
+
+    // Dijalankan di EDT setiap 100 ms selama ronde berjalan.
+    private void handleTick(long elapsedMillis) {
+        if (mode instanceof Timed) {
+            Timed timedMode = (Timed) mode;
+            if (timedMode.getTimeLeftMillis(elapsedMillis) <= 0) {
+                // Time Attack: ronde selesai. Survival: nyawa -1 dan kata baru.
+                timedMode.onTimeUp();
+                if (mode.isOver()) {
+                    finishGame();
+                    return;
+                }
+                // Survival masih hidup: kata baru muncul, kotak ketik dikosongkan.
+                clearInput();
+            }
         }
+        updateTimeLabel(elapsedMillis);
+        // getWpm(long) = versi overload yang memakai waktu dari timer.
+        wpmLabel.setText(String.format("WPM: %.0f", mode.getStats().getWpm(elapsedMillis)));
     }
 
     // ---------------------------------------------------------------
@@ -272,10 +464,11 @@ public class GamePanel extends JPanel implements TimerListener {
     //   2. sudah diketik tapi salah -> merah + garis bawah (yang ditampilkan huruf target)
     //   3. posisi sekarang          -> terang + garis bawah (seperti kursor)
     //   4. belum diketik            -> abu-abu
-    // Contoh hasil untuk target "abc", ketikan "ax":
+    // upcoming = kata-kata berikutnya (Time Attack), ditampilkan abu-abu setelah target.
+    // Contoh hasil untuk target "abc", ketikan "ax", upcoming "":
     //   <html><body style='width:660px'><font color='#a6e3a1'>a</font>
     //   <font color='#f38ba8'><u>b</u></font><font color='#cdd6f4'><u>c</u></font></body></html>
-    private String buildColoredHtml(String target, String typed) {
+    private String buildColoredHtml(String target, String typed, String upcoming) {
         StringBuilder html = new StringBuilder();
         // width membuat teks yang panjang turun ke baris berikutnya.
         html.append("<html><body style='width:").append(TARGET_WIDTH).append("px'>");
@@ -305,6 +498,13 @@ public class GamePanel extends JPanel implements TimerListener {
                 html.append(shownChar);
                 html.append("</font>");
             }
+        }
+
+        // Kata-kata berikutnya (hanya berisi huruf, jadi tidak perlu di-escape).
+        if (!upcoming.isEmpty()) {
+            html.append("&nbsp;&nbsp;&nbsp;<font color='").append(Theme.PENDING_HTML).append("'>");
+            html.append(upcoming);
+            html.append("</font>");
         }
 
         html.append("</body></html>");
@@ -338,20 +538,5 @@ public class GamePanel extends JPanel implements TimerListener {
         }
         // Huruf biasa: tampilkan apa adanya.
         return String.valueOf(c);
-    }
-
-    // ---------------------------------------------------------------
-    // Timer (Phase 4)
-    // ---------------------------------------------------------------
-
-    // Dari interface TimerListener. Dipanggil oleh thread timer, BUKAN oleh EDT.
-    @Override
-    public void onTick(long elapsedMillis) {
-        // TODO Phase 4: semua perubahan UI di dalam SwingUtilities.invokeLater(...).
-    }
-
-    // Menghentikan timer (dipanggil saat game selesai, keluar, atau sebelum ronde baru).
-    private void stopTimer() {
-        // TODO Phase 4: timer.stopTimer();
     }
 }

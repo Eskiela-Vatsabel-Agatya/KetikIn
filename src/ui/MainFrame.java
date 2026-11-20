@@ -10,6 +10,8 @@ import data.WordBank;
 import data.WordFileException;
 import mode.ClassicMode;
 import mode.GameMode;
+import mode.SurvivalMode;
+import mode.TimeAttackMode;
 import model.Player;
 
 /*
@@ -128,9 +130,17 @@ public class MainFrame extends JFrame {
         if (modeName.equals(GameMode.MODE_CLASSIC)) {
             return new ClassicMode(wordBank);
         }
-        // TODO Phase 4 dan 5: tambahkan Time Attack, Survival, dan Code di sini.
-        // Sementara mode lain belum bisa dipilih dari menu, jadi pakai Classic.
-        return new ClassicMode(wordBank);
+        if (modeName.equals(GameMode.MODE_TIME_ATTACK)) {
+            return new TimeAttackMode(wordBank);
+        }
+        if (modeName.equals(GameMode.MODE_SURVIVAL)) {
+            return new SurvivalMode(wordBank);
+        }
+        // TODO Phase 5: tambahkan Code Mode di sini.
+
+        // Nama mode tidak dikenal = salah di kode kita sendiri (bukan salah pemain).
+        // Lebih baik langsung error dengan pesan jelas daripada diam-diam memakai mode lain.
+        throw new IllegalArgumentException("Mode tidak dikenal: " + modeName);
     }
 
     // Memulai ronde baru untuk mode tertentu. Dipanggil dari menu dan dari tombol "Main lagi".

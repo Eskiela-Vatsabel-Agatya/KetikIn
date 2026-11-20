@@ -5,6 +5,8 @@ import java.util.HashMap;
 import data.InvalidUsernameException;
 import data.WordBank;
 import data.WordFileException;
+import mode.SurvivalMode;
+import mode.TimeAttackMode;
 import model.Player;
 import model.ScoreEntry;
 import model.TypingStats;
@@ -31,6 +33,7 @@ public class SelfTest {
         testTypingStats();
         testScoreEntry();
         testWordBank();
+        testTimedModes();
 
         System.out.println();
         System.out.println("Hasil: " + passCount + " PASS, " + failCount + " FAIL");
@@ -248,5 +251,51 @@ public class SelfTest {
         } catch (WordFileException e) {
             check("file yang tidak ada ditolak -> " + e.getMessage(), true);
         }
+        System.out.println();
+    }
+
+    // ---------------------------------------------------------------
+    // TimeAttackMode dan SurvivalMode (tanpa GUI, tanpa timer)
+    // ---------------------------------------------------------------
+
+    private static void testTimedModes() {
+        System.out.println("--- Time Attack dan Survival ---");
+
+        WordBank bank = new WordBank();
+        try {
+            bank.loadWords(WordBank.WORDS_PATH);
+        } catch (WordFileException e) {
+            check("file kata bisa dimuat untuk tes mode (error: " + e.getMessage() + ")", false);
+            return;
+        }
+
+        // Time Attack: kata benar dihitung, kata salah tidak, waktu habis = selesai.
+        TimeAttackMode timeAttack = new TimeAttackMode(bank);
+        String firstWord = timeAttack.getCurrentTarget();
+        check("Time Attack: kata benar diterima", timeAttack.submit(firstWord));
+        check("Time Attack: kata salah ditolak", !timeAttack.submit("zzzzz"));
+        check("Time Attack: 1 kata benar", timeAttack.getCorrectWords() == 1);
+        check("Time Attack: ada kata berikutnya untuk ditampilkan",
+                timeAttack.getUpcomingText().split(" ").length == 4);
+        check("Time Attack: sisa waktu setelah 15 detik = 45 detik",
+                timeAttack.getTimeLeftMillis(15000) == 45000);
+        check("Time Attack: belum selesai sebelum waktu habis", !timeAttack.isOver());
+        timeAttack.onTimeUp();
+        check("Time Attack: selesai setelah onTimeUp()", timeAttack.isOver());
+
+        // Survival: 3 nyawa, salah atau waktu habis = nyawa -1.
+        SurvivalMode survival = new SurvivalMode(bank);
+        check("Survival: mulai dengan 3 nyawa", survival.getLives() == 3);
+        check("Survival: kata benar diterima", survival.submit(survival.getCurrentTarget()));
+        check("Survival: batas waktu turun 0.1 detik setelah kata benar",
+                survival.getTimeLimitMillis() == 4900);
+        survival.submit("zzzzz");
+        check("Survival: salah ketik = nyawa tinggal 2", survival.getLives() == 2);
+        survival.onTimeUp();
+        check("Survival: waktu habis = nyawa tinggal 1", survival.getLives() == 1);
+        check("Survival: belum selesai dengan 1 nyawa", !survival.isOver());
+        survival.onTimeUp();
+        check("Survival: selesai saat nyawa 0", survival.isOver());
+        check("Survival: skor = 1 kata x 15 + 0 huruf = 15", survival.calculateScore() == 15);
     }
 }

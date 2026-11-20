@@ -7,8 +7,11 @@ import model.TypingStats;
  * GameMode: kelas induk (abstract) untuk semua mode permainan. Isinya hal-hal yang
  * dimiliki semua mode (nama, bank kata, statistik) dan daftar method yang WAJIB
  * dibuat oleh setiap mode.
+ * Kenapa abstract? "Mode permainan" saja belum punya aturan; aturannya baru ada di mode
+ * yang konkret (Classic, Time Attack, ...). Jadi GameMode tidak boleh dibuat objeknya langsung.
  * Owner: Person A
- * Materi: Abstraction (abstract class), Inheritance (kelas induk), Encapsulation (protected)
+ * Materi: Abstraction (abstract class), Inheritance (kelas induk), Encapsulation (protected),
+ *         Polymorphism runtime (method yang di-override oleh kelas anak)
  */
 // [MATERI: Abstraction - abstract class]
 public abstract class GameMode {
@@ -31,6 +34,8 @@ public abstract class GameMode {
         this.stats = new TypingStats();
     }
 
+    // ---------- Method abstract: WAJIB dibuat oleh setiap mode ----------
+
     public abstract String getDescription();
 
     // Teks yang harus diketik pemain sekarang.
@@ -43,12 +48,33 @@ public abstract class GameMode {
 
     public abstract int calculateScore();
 
-    // Method biasa (concrete) yang sama untuk semua mode.
+    // ---------- Method biasa (concrete): sama untuk semua mode ----------
+
     public String getName() {
         return name;
     }
 
     public TypingStats getStats() {
         return stats;
+    }
+
+    // ---------- Method biasa yang BOLEH di-override ----------
+    // Isinya nilai default untuk mode "teks panjang" (Classic). Mode lain yang berbeda
+    // cukup meng-override method yang perlu saja.
+
+    // true kalau pemain mengirim satu kata setiap kali dengan Spasi/Enter (Time Attack, Survival).
+    // false kalau pemain mengetik satu teks utuh (Classic).
+    public boolean isWordMode() {
+        return false;
+    }
+
+    // Kata-kata berikutnya yang ditampilkan abu-abu setelah target. Kosong kalau tidak ada.
+    public String getUpcomingText() {
+        return "";
+    }
+
+    // Info tambahan di pojok kanan atas layar game (misalnya nyawa). Kosong kalau tidak ada.
+    public String getStatusText() {
+        return "";
     }
 }
