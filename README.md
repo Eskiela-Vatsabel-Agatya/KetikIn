@@ -24,6 +24,9 @@ run.bat
 `run.bat` starts the game with assertions enabled (`java -ea -jar dist\KetikIn.jar`).
 You can also double-click `dist\KetikIn.jar`.
 
+`selftest.bat` builds and then runs `test\SelfTest.java`, which checks the non-GUI classes and prints
+`PASS`/`FAIL` for each check (it should end with `0 FAIL`).
+
 ## Project layout
 
 ```
