@@ -8,10 +8,10 @@ import java.awt.event.KeyListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import engine.GameTimer;
@@ -32,9 +32,6 @@ import model.TypingStats;
  */
 public class GamePanel extends JPanel implements TimerListener {
 
-    // Lebar teks target di dalam HTML. Swing menghitung "px" HTML sekitar 1.3 kali lebih besar,
-    // jadi 660 di sini kira-kira 860 pixel di layar (pas dengan lebar kotak).
-    private static final int TARGET_WIDTH = 660;
     private static final double MILLIS_PER_SECOND = 1000.0;
 
     private MainFrame mainFrame;
@@ -56,7 +53,8 @@ public class GamePanel extends JPanel implements TimerListener {
     private JLabel timerLabel;
     private JLabel wpmLabel;
     private JLabel accuracyLabel;
-    private JLabel targetLabel;
+    // Tempat menampilkan teks target berwarna (HTML). Lihat createTargetPanel().
+    private JEditorPane targetPane;
     private JTextField inputField;
 
     public GamePanel(MainFrame mainFrame) {
@@ -109,10 +107,26 @@ public class GamePanel extends JPanel implements TimerListener {
         box.setBackground(Theme.PANEL);
         box.setBorder(BorderFactory.createEmptyBorder(Theme.PADDING, Theme.PADDING, Theme.PADDING, Theme.PADDING));
 
-        targetLabel = Theme.createLabel("", Theme.TYPING_FONT, Theme.TEXT);
-        // Teks mulai dari atas kotak, bukan di tengah.
-        targetLabel.setVerticalAlignment(SwingConstants.TOP);
-        box.add(targetLabel, BorderLayout.CENTER);
+        // Kenapa JEditorPane, bukan JLabel? JLabel dengan HTML butuh lebar yang kita tebak sendiri
+        // (style='width:...px'), dan ukuran "px" itu berbeda di setiap versi Java dan setelan
+        // skala layar Windows, sehingga teks bisa terpotong. JEditorPane otomatis memotong baris
+        // (wrap) sesuai lebarnya yang sebenarnya, jadi tidak perlu angka tebakan.
+        // "text/html" = isi yang kita berikan dibaca sebagai HTML.
+        targetPane = new JEditorPane("text/html", "");
+        // Hanya untuk dibaca, pemain tidak bisa mengubah isinya.
+        targetPane.setEditable(false);
+        // Tidak bisa menerima fokus, jadi kotak ketik tetap fokus walaupun teks target diklik.
+        targetPane.setFocusable(false);
+        // Latar sama dengan kotak di sekelilingnya.
+        targetPane.setBackground(Theme.PANEL);
+        // Tanpa garis tepi dan tanpa jarak tambahan bawaan JEditorPane.
+        targetPane.setBorder(BorderFactory.createEmptyBorder());
+        // Supaya HTML memakai font dan warna teks milik komponen ini (bukan font bawaan HTML).
+        targetPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+        // Font monospace dari Theme, sama seperti kotak ketik.
+        targetPane.setFont(Theme.TYPING_FONT);
+        targetPane.setForeground(Theme.TEXT);
+        box.add(targetPane, BorderLayout.CENTER);
         return box;
     }
 
@@ -372,7 +386,7 @@ public class GamePanel extends JPanel implements TimerListener {
 
     // Menggambar ulang teks berwarna, info mode, dan akurasi/WPM.
     private void refreshDisplay(String typed) {
-        targetLabel.setText(buildColoredHtml(mode.getCurrentTarget(), typed, mode.getUpcomingText()));
+        targetPane.setText(buildColoredHtml(mode.getCurrentTarget(), typed, mode.getUpcomingText()));
 
         // getStatusText() di-override oleh Survival (nyawa). Mode lain mengembalikan "".
         String status = mode.getStatusText();
@@ -458,57 +472,73 @@ public class GamePanel extends JPanel implements TimerListener {
     // ---------------------------------------------------------------
 
     // [MATERI: String - StringBuilder, charAt]
-    // Membangun teks HTML berwarna untuk JLabel. Dibangun ulang dari nol setiap ada ketukan.
-    // Setiap huruf target dicek satu per satu dan dibungkus tag sesuai keadaannya:
+    // Membangun teks HTML berwarna untuk targetPane. Dibangun ulang dari nol setiap ada ketukan.
+    // Setiap huruf target dicek satu per satu, lalu diberi gaya sesuai keadaannya (styleForChar):
     //   1. sudah diketik dan benar  -> hijau
     //   2. sudah diketik tapi salah -> merah + garis bawah (yang ditampilkan huruf target)
     //   3. posisi sekarang          -> terang + garis bawah (seperti kursor)
     //   4. belum diketik            -> abu-abu
+    // Huruf-huruf berurutan yang gayanya SAMA dimasukkan ke dalam satu <span> yang sama.
+    // Kenapa tidak satu <span> per huruf? Di Java 9 ke atas (dengan skala layar Windows),
+    // Swing salah menghitung lebar baris kalau setiap huruf punya tag sendiri, sehingga
+    // baris pertama keluar dari kotak dan terpotong. Dengan sedikit tag, lebarnya dihitung benar.
     // upcoming = kata-kata berikutnya (Time Attack), ditampilkan abu-abu setelah target.
-    // Contoh hasil untuk target "abc", ketikan "ax", upcoming "":
-    //   <html><body style='width:660px'><font color='#a6e3a1'>a</font>
-    //   <font color='#f38ba8'><u>b</u></font><font color='#cdd6f4'><u>c</u></font></body></html>
+    // Contoh hasil untuk target "abcd", ketikan "ax":
+    //   <html><body><span style='color:#a6e3a1'>a</span>
+    //   <span style='color:#f38ba8; text-decoration:underline'>b</span>
+    //   <span style='color:#cdd6f4; text-decoration:underline'>c</span>
+    //   <span style='color:#9399b2'>d</span></body></html>
+    // Baris yang terlalu panjang otomatis turun ke baris berikutnya oleh JEditorPane.
     private String buildColoredHtml(String target, String typed, String upcoming) {
         StringBuilder html = new StringBuilder();
-        // width membuat teks yang panjang turun ke baris berikutnya.
-        html.append("<html><body style='width:").append(TARGET_WIDTH).append("px'>");
+        html.append("<html><body>");
 
+        // Gaya huruf sebelumnya. Kosong = belum ada <span> yang terbuka.
+        String previousStyle = "";
         for (int i = 0; i < target.length(); i++) {
-            String shownChar = escapeHtmlChar(target, i);
+            String style = styleForChar(target, typed, i);
 
-            if (i < typed.length()) {
-                // Huruf ini sudah diketik: bandingkan dengan huruf target di posisi yang sama.
-                if (typed.charAt(i) == target.charAt(i)) {
-                    html.append("<font color='").append(Theme.CORRECT_HTML).append("'>");
-                    html.append(shownChar);
-                    html.append("</font>");
-                } else {
-                    html.append("<font color='").append(Theme.WRONG_HTML).append("'><u>");
-                    html.append(shownChar);
-                    html.append("</u></font>");
+            // Buka <span> baru hanya kalau gaya huruf ini berbeda dari huruf sebelumnya.
+            if (!style.equals(previousStyle)) {
+                if (!previousStyle.isEmpty()) {
+                    html.append("</span>");
                 }
-            } else if (i == typed.length()) {
-                // Posisi huruf yang akan diketik berikutnya.
-                html.append("<font color='").append(Theme.TEXT_HTML).append("'><u>");
-                html.append(shownChar);
-                html.append("</u></font>");
-            } else {
-                // Belum diketik.
-                html.append("<font color='").append(Theme.PENDING_HTML).append("'>");
-                html.append(shownChar);
-                html.append("</font>");
+                html.append("<span style='").append(style).append("'>");
+                previousStyle = style;
             }
+            html.append(escapeHtmlChar(target, i));
+        }
+        // Tutup <span> terakhir.
+        if (!previousStyle.isEmpty()) {
+            html.append("</span>");
         }
 
         // Kata-kata berikutnya (hanya berisi huruf, jadi tidak perlu di-escape).
         if (!upcoming.isEmpty()) {
-            html.append("&nbsp;&nbsp;&nbsp;<font color='").append(Theme.PENDING_HTML).append("'>");
+            html.append("&nbsp;&nbsp;&nbsp;<span style='color:").append(Theme.PENDING_HTML).append("'>");
             html.append(upcoming);
-            html.append("</font>");
+            html.append("</span>");
         }
 
         html.append("</body></html>");
         return html.toString();
+    }
+
+    // Gaya (CSS) untuk huruf target di posisi index: warna, dan garis bawah kalau perlu.
+    private String styleForChar(String target, String typed, int index) {
+        if (index < typed.length()) {
+            // Huruf ini sudah diketik: bandingkan dengan huruf target di posisi yang sama.
+            if (typed.charAt(index) == target.charAt(index)) {
+                return "color:" + Theme.CORRECT_HTML;
+            }
+            return "color:" + Theme.WRONG_HTML + "; text-decoration:underline";
+        }
+        if (index == typed.length()) {
+            // Posisi huruf yang akan diketik berikutnya.
+            return "color:" + Theme.TEXT_HTML + "; text-decoration:underline";
+        }
+        // Belum diketik.
+        return "color:" + Theme.PENDING_HTML;
     }
 
     // Mengubah satu huruf target menjadi teks yang aman untuk HTML.
