@@ -19,15 +19,9 @@ import engine.TimerListener;
 import mode.GameMode;
 import model.TypingStats;
 
-/*
- * GamePanel: layar permainan. Menampilkan teks target dengan warna hijau/merah
- * (huruf fokus ditulis tebal), kotak ketik, timer, WPM, dan akurasi.
- * Setiap ronde punya satu GameTimer (thread) yang memanggil onTick() setiap 100 ms.
- * Owner: Person A
- * Materi: GUI (layout, JTextField, KeyListener), Polymorphism runtime (variabel bertipe GameMode),
- *         String (StringBuilder, charAt, substring, membangun HTML),
- *         Multithreading (GameTimer, EDT, invokeLater), Abstraction (implements TimerListener)
- */
+// GamePanel: layar main, teks target berwarna, kotak ketik, timer, WPM, akurasi
+// Owner: Eskiela Vatsabel Agatya
+// Materi: GUI, event handling, polymorphism, string, multithreading, abstraction
 public class GamePanel extends JPanel implements TimerListener {
 
     private static final double MILLIS_PER_SECOND = 1000.0;
@@ -35,14 +29,12 @@ public class GamePanel extends JPanel implements TimerListener {
     private MainFrame mainFrame;
 
     // [MATERI: Polymorphism - runtime]
-    // Variabel ini bertipe GameMode. Isinya bisa ClassicMode atau LetterFocusMode.
-    // GamePanel tidak tahu (dan tidak peduli) mode apa ini; ia hanya memanggil method GameMode,
-    // dan Java menjalankan versi method milik objek aslinya.
+    // isinya bisa ClassicMode atau LetterFocusMode
     private GameMode mode;
-    // Timer ronde yang sedang berjalan (null kalau tidak ada ronde).
+    // null kalau tidak ada ronde
     private GameTimer timer;
 
-    // Isi kotak ketik pada pengecekan sebelumnya. Dipakai untuk tahu berapa huruf BARU yang diketik.
+    // isi kotak ketik sebelumnya, buat tahu huruf mana yang baru
     private String previousText = "";
 
     private JLabel modeLabel;
@@ -50,7 +42,6 @@ public class GamePanel extends JPanel implements TimerListener {
     private JLabel timerLabel;
     private JLabel wpmLabel;
     private JLabel accuracyLabel;
-    // Tempat menampilkan teks target berwarna (HTML). Lihat createTargetPanel().
     private JEditorPane targetPane;
     private JTextField inputField;
 
@@ -66,11 +57,7 @@ public class GamePanel extends JPanel implements TimerListener {
         add(createInputPanel(), BorderLayout.SOUTH);
     }
 
-    // ---------------------------------------------------------------
-    // Membuat tampilan
-    // ---------------------------------------------------------------
-
-    // Bagian atas: nama mode di kiri, angka-angka (waktu, WPM, akurasi) di kanan.
+    // nama mode di kiri, waktu WPM akurasi di kanan
     private JPanel createTopBar() {
         JPanel bar = new JPanel(new BorderLayout());
         bar.setOpaque(false);
@@ -95,36 +82,27 @@ public class GamePanel extends JPanel implements TimerListener {
         return bar;
     }
 
-    // Bagian tengah: kotak berisi teks target yang berwarna.
     private JPanel createTargetPanel() {
         JPanel box = new JPanel(new BorderLayout());
         box.setBackground(Theme.PANEL);
         box.setBorder(BorderFactory.createEmptyBorder(Theme.PADDING, Theme.PADDING, Theme.PADDING, Theme.PADDING));
 
-        // Kenapa JEditorPane, bukan JLabel? JLabel dengan HTML butuh lebar yang kita tebak sendiri
-        // (style='width:...px'), dan ukuran "px" itu berbeda di setiap versi Java dan setelan
-        // skala layar Windows, sehingga teks bisa terpotong. JEditorPane otomatis memotong baris
-        // (wrap) sesuai lebarnya yang sebenarnya, jadi tidak perlu angka tebakan.
-        // "text/html" = isi yang kita berikan dibaca sebagai HTML.
+        // pakai JEditorPane bukan JLabel biar wrap sesuai lebar asli, tanpa tebak lebar px
         targetPane = new JEditorPane("text/html", "");
-        // Hanya untuk dibaca, pemain tidak bisa mengubah isinya.
         targetPane.setEditable(false);
-        // Tidak bisa menerima fokus, jadi kotak ketik tetap fokus walaupun teks target diklik.
+        // tidak bisa fokus, jadi kotak ketik tetap fokus walau teks diklik
         targetPane.setFocusable(false);
-        // Latar sama dengan kotak di sekelilingnya.
         targetPane.setBackground(Theme.PANEL);
-        // Tanpa garis tepi dan tanpa jarak tambahan bawaan JEditorPane.
         targetPane.setBorder(BorderFactory.createEmptyBorder());
-        // Supaya HTML memakai font dan warna teks milik komponen ini (bukan font bawaan HTML).
+        // biar HTML ikut font dan warna komponen ini
         targetPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
-        // Font monospace dari Theme, sama seperti kotak ketik.
         targetPane.setFont(Theme.TYPING_FONT);
         targetPane.setForeground(Theme.TEXT);
         box.add(targetPane, BorderLayout.CENTER);
         return box;
     }
 
-    // Bagian bawah: petunjuk kecil, kotak ketik, dan tombol keluar.
+    // petunjuk, kotak ketik, dan tombol keluar
     private JPanel createInputPanel() {
         JPanel panel = new JPanel(new BorderLayout(Theme.PADDING, Theme.SMALL_PADDING));
         panel.setOpaque(false);
@@ -142,27 +120,23 @@ public class GamePanel extends JPanel implements TimerListener {
         inputField.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Theme.ACCENT, 2),
                 BorderFactory.createEmptyBorder(6, 10, 6, 10)));
-        // Mematikan copy/paste/drag ke kotak ketik, supaya pemain tidak bisa menempel teks target.
+        // matikan paste biar tidak bisa tempel teks target
         inputField.setTransferHandler(null);
 
-        // [MATERI: GUI - event handling] KeyListener sebagai anonymous inner class.
-        // Kita hanya butuh keyReleased (tombol dilepas = huruf sudah masuk ke kotak ketik).
+        // [MATERI: GUI - event handling]
         inputField.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
-                // Tidak dipakai.
             }
 
             @Override
             public void keyPressed(KeyEvent e) {
-                // Tidak dipakai.
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
                 handleInput();
-                // Kembalikan kursor ke akhir teks. Jadi tombol panah kiri/kanan dan Home
-                // tidak bisa dipakai untuk menyisipkan huruf di tengah ketikan.
+                // kursor balik ke akhir biar tidak bisa sisip huruf di tengah
                 inputField.setCaretPosition(inputField.getText().length());
             }
         });
@@ -177,21 +151,13 @@ public class GamePanel extends JPanel implements TimerListener {
         return panel;
     }
 
-    // ---------------------------------------------------------------
-    // Mulai, selesai, keluar
-    // ---------------------------------------------------------------
-
-    // Memulai satu ronde, normal atau dengan huruf fokus.
     public void startGame(GameMode newMode) {
-        // Timer ronde sebelumnya (kalau masih ada) dihentikan dulu.
         stopTimer();
 
         mode = newMode;
         previousText = "";
         inputField.setText("");
 
-        // getName() dan getDescription() dipanggil lewat variabel GameMode:
-        // hasilnya tergantung objek mode yang asli (runtime polymorphism).
         modeLabel.setText(mode.getName());
         descriptionLabel.setText(mode.getDescription());
 
@@ -201,57 +167,47 @@ public class GamePanel extends JPanel implements TimerListener {
         wpmLabel.setText("WPM: 0");
         inputField.requestFocusInWindow();
 
-        // [MATERI: Multithreading] Setiap ronde membuat objek GameTimer BARU,
-        // karena sebuah Thread hanya bisa di-start() satu kali.
+        // [MATERI: Multithreading]
+        // timer baru tiap ronde, thread cuma bisa di-start sekali
         timer = new GameTimer(this);
         timer.start();
     }
 
-    // Ronde selesai: hentikan timer dan hitungan waktu, lalu pindah ke layar hasil.
     private void finishGame() {
         stopTimer();
         mode.getStats().stop();
         mainFrame.showResult(mode);
     }
 
-    // Tombol keluar: tanya konfirmasi, lalu kembali ke menu tanpa menyimpan skor.
+    // balik ke menu tanpa simpan skor
     private void quitGame() {
-        // Selama dialog terbuka, timer tetap berdetak dan jam tetap berjalan. Itu tidak masalah:
-        // ronde hanya bisa selesai karena pemain mengetik, bukan karena waktu.
+        // timer tetap jalan selama dialog terbuka, tidak masalah karena ronde selesai lewat ketikan
         boolean yes = mainFrame.askConfirmation(
                 "Keluar dari permainan?\nSkor ronde ini tidak akan disimpan.", "Keluar ke Menu");
         if (yes) {
             stopTimer();
-            mode = null;   // ronde dibuang
+            mode = null;
             mainFrame.showMenu();
         }
     }
 
-    // Menghentikan timer ronde ini (kalau ada).
     private void stopTimer() {
         if (timer != null) {
             timer.stopTimer();
-            // null = tidak ada timer aktif. Detak yang masih "tertinggal" dari timer lama
-            // akan diabaikan di onTick (lihat penjelasan di sana).
+            // detak lama yang masih tertinggal diabaikan di onTick
             timer = null;
         }
     }
 
-    // ---------------------------------------------------------------
-    // Input dari keyboard
-    // ---------------------------------------------------------------
-
-    // Dipanggil setiap kali tombol dilepas di kotak ketik.
-    // Pemain mengetik satu teks panjang. Ronde selesai ketika semua huruf sudah diketik.
+    // dipanggil tiap tombol dilepas, ronde selesai kalau semua huruf sudah diketik
     private void handleInput() {
-        // Tidak ada ronde yang berjalan (misalnya sudah keluar atau sudah selesai).
         if (mode == null || mode.isOver()) {
             return;
         }
         String target = mode.getCurrentTarget();
         String typed = inputField.getText();
 
-        // Ketikan tidak boleh lebih panjang dari target: buang huruf yang kelebihan.
+        // buang huruf yang lebih panjang dari target
         if (typed.length() > target.length()) {
             typed = typed.substring(0, target.length());
             inputField.setText(typed);
@@ -261,7 +217,6 @@ public class GamePanel extends JPanel implements TimerListener {
         previousText = typed;
         refreshDisplay(typed);
 
-        // Semua huruf target sudah diketik: kirim ke mode, ronde selesai.
         if (typed.length() == target.length()) {
             mode.submit(typed);
             if (mode.isOver()) {
@@ -270,12 +225,8 @@ public class GamePanel extends JPanel implements TimerListener {
         }
     }
 
-    // Mencatat huruf-huruf BARU ke TypingStats.
-    // Hanya dihitung kalau teks bertambah panjang. Backspace membuat teks lebih pendek,
-    // jadi Backspace tidak pernah dihitung sebagai ketukan.
-    // Kalau pemain mengetik sangat cepat, bisa ada lebih dari satu huruf baru di antara
-    // dua event, jadi kita pakai loop untuk semua huruf baru.
-    // (typed tidak pernah lebih panjang dari target, lihat handleInput.)
+    // hitung cuma huruf baru, backspace tidak dihitung
+    // pakai loop karena ketik cepat bisa masuk beberapa huruf sekaligus
     private void recordNewKeystrokes(String typed, String target) {
         if (typed.length() <= previousText.length()) {
             return;
@@ -286,50 +237,29 @@ public class GamePanel extends JPanel implements TimerListener {
         }
     }
 
-    // ---------------------------------------------------------------
-    // Tampilan
-    // ---------------------------------------------------------------
-
-    // Menggambar ulang teks berwarna dan akurasi/WPM.
     private void refreshDisplay(String typed) {
-        // getFocusLetter() di-override oleh LetterFocusMode (runtime polymorphism).
-        // Mode normal mengembalikan NO_FOCUS, jadi tidak ada huruf yang ditebalkan.
+        // mode normal kasih NO_FOCUS, jadi tidak ada yang ditebalkan
         targetPane.setText(buildColoredHtml(mode.getCurrentTarget(), typed, mode.getFocusLetter()));
 
         TypingStats stats = mode.getStats();
-        // [MATERI: String - format] %.0f = tanpa angka di belakang koma, %% = tanda persen.
         wpmLabel.setText(String.format("WPM: %.0f", stats.getWpm()));
         accuracyLabel.setText(String.format("Akurasi: %.1f%%", stats.getAccuracy()));
     }
 
-    // Waktu yang sudah berjalan, menghitung naik.
     private void updateTimeLabel(long elapsedMillis) {
         timerLabel.setText(String.format("Waktu: %.1f s", elapsedMillis / MILLIS_PER_SECOND));
     }
 
-    // ---------------------------------------------------------------
-    // Timer
-    // ---------------------------------------------------------------
-
-    // Dari interface TimerListener. PENTING: method ini dijalankan oleh thread TIMER, bukan oleh EDT.
     // [MATERI: Multithreading - EDT]
-    // Swing tidak thread-safe: hanya Event Dispatch Thread (EDT) yang boleh mengubah komponen.
-    // Jadi di sini kita TIDAK menyentuh label sama sekali. Pekerjaannya dititipkan ke EDT
-    // lewat SwingUtilities.invokeLater, dan EDT akan menjalankannya sesaat kemudian.
-    // final: supaya variabel ini boleh dipakai di dalam anonymous class di bawah.
+    // jalan di thread timer, update UI harus lewat EDT
     @Override
     public void onTick(final long elapsedMillis) {
-        // Thread yang sedang menjalankan method ini = thread timer yang mengirim detak ini.
         final Thread tickingTimer = Thread.currentThread();
 
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                // Detak "terlambat": timer bisa saja sudah menitipkan detak ini ke EDT tepat
-                // sebelum ronde selesai, dihentikan, atau diganti ronde baru. Kalau detak ini
-                // bukan dari timer ronde sekarang, atau ronde sudah selesai, abaikan saja.
-                // Tanpa pengecekan ini, detak lama bisa mengubah layar ronde baru, atau
-                // memanggil finishGame() dua kali.
+                // abaikan detak telat dari timer lama atau ronde yang sudah selesai
                 if (tickingTimer != timer || mode == null || mode.isOver()) {
                     return;
                 }
@@ -338,51 +268,27 @@ public class GamePanel extends JPanel implements TimerListener {
         });
     }
 
-    // Dijalankan di EDT setiap 100 ms selama ronde berjalan.
     private void handleTick(long elapsedMillis) {
         updateTimeLabel(elapsedMillis);
-        // getWpm(long) = versi overload yang memakai waktu dari timer.
         wpmLabel.setText(String.format("WPM: %.0f", mode.getStats().getWpm(elapsedMillis)));
     }
 
-    // ---------------------------------------------------------------
-    // Teks berwarna (HTML)
-    // ---------------------------------------------------------------
-
-    // [MATERI: String - StringBuilder, charAt]
-    // Membangun teks HTML berwarna untuk targetPane. Dibangun ulang dari nol setiap ada ketukan.
-    // Setiap huruf target dicek satu per satu, lalu diberi gaya sesuai keadaannya (styleForChar):
-    //   1. sudah diketik dan benar  -> hijau
-    //   2. sudah diketik tapi salah -> merah + garis bawah (yang ditampilkan huruf target)
-    //   3. posisi sekarang          -> terang + garis bawah (seperti kursor)
-    //   4. belum diketik            -> abu-abu
-    // Ditambah: huruf fokus (misalnya setiap 'j') juga ditulis tebal.
-    // Huruf-huruf berurutan yang gayanya SAMA dimasukkan ke dalam satu <span> yang sama.
-    // Kenapa tidak satu <span> per huruf? Di Java 9 ke atas (dengan skala layar Windows),
-    // Swing salah menghitung lebar baris kalau setiap huruf punya tag sendiri, sehingga
-    // baris pertama keluar dari kotak dan terpotong. Dengan sedikit tag, lebarnya dihitung benar.
-    // Contoh hasil untuk target "abcd", ketikan "ax" (tanpa huruf fokus):
-    //   <html><body><span style='color:#a6e3a1'>a</span>
-    //   <span style='color:#f38ba8; text-decoration:underline'>b</span>
-    //   <span style='color:#cdd6f4; text-decoration:underline'>c</span>
-    //   <span style='color:#9399b2'>d</span></body></html>
-    // Baris yang terlalu panjang otomatis turun ke baris berikutnya oleh JEditorPane.
+    // [MATERI: String - StringBuilder]
+    // warnai tiap huruf sesuai benar atau salah, huruf fokus ditebalkan
+    // huruf berurutan dengan gaya sama digabung satu span, biar lebar baris tidak salah di Java 9+
     private String buildColoredHtml(String target, String typed, char focusLetter) {
         StringBuilder html = new StringBuilder();
         html.append("<html><body>");
 
-        // Gaya huruf sebelumnya. Kosong = belum ada <span> yang terbuka.
+        // kosong = belum ada span yang terbuka
         String previousStyle = "";
         for (int i = 0; i < target.length(); i++) {
             String style = styleForChar(target, typed, i);
-            // Huruf fokus: tambahkan tebal. Kata-katanya huruf kecil semua, dan focusLetter
-            // juga huruf kecil, jadi cukup dibandingkan dengan ==.
-            // Di mode normal focusLetter = NO_FOCUS (spasi), dan spasi tidak perlu ditebalkan.
             if (focusLetter != GameMode.NO_FOCUS && target.charAt(i) == focusLetter) {
                 style = style + "; font-weight:bold";
             }
 
-            // Buka <span> baru hanya kalau gaya huruf ini berbeda dari huruf sebelumnya.
+            // buka span baru kalau gayanya beda dari huruf sebelumnya
             if (!style.equals(previousStyle)) {
                 if (!previousStyle.isEmpty()) {
                     html.append("</span>");
@@ -390,12 +296,9 @@ public class GamePanel extends JPanel implements TimerListener {
                 html.append("<span style='").append(style).append("'>");
                 previousStyle = style;
             }
-            // Kata-katanya hanya berisi huruf a-z dan satu spasi di antara kata, jadi huruf
-            // bisa langsung ditulis tanpa diubah. Spasi biasa juga penting: di situlah
-            // JEditorPane boleh memotong baris (wrap).
+            // spasi biasa sengaja tidak diganti, di situ JEditorPane boleh wrap
             html.append(target.charAt(i));
         }
-        // Tutup <span> terakhir.
         if (!previousStyle.isEmpty()) {
             html.append("</span>");
         }
@@ -404,20 +307,17 @@ public class GamePanel extends JPanel implements TimerListener {
         return html.toString();
     }
 
-    // Gaya (CSS) untuk huruf target di posisi index: warna, dan garis bawah kalau perlu.
+    // hijau benar, merah salah, garis bawah posisi sekarang, abu-abu belum diketik
     private String styleForChar(String target, String typed, int index) {
         if (index < typed.length()) {
-            // Huruf ini sudah diketik: bandingkan dengan huruf target di posisi yang sama.
             if (typed.charAt(index) == target.charAt(index)) {
                 return "color:" + Theme.CORRECT_HTML;
             }
             return "color:" + Theme.WRONG_HTML + "; text-decoration:underline";
         }
         if (index == typed.length()) {
-            // Posisi huruf yang akan diketik berikutnya.
             return "color:" + Theme.TEXT_HTML + "; text-decoration:underline";
         }
-        // Belum diketik.
         return "color:" + Theme.PENDING_HTML;
     }
 }

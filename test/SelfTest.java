@@ -18,16 +18,12 @@ import model.Player;
 import model.ScoreEntry;
 import model.TypingStats;
 
-/*
- * SelfTest: program kecil untuk mengetes bagian non-GUI (Player, TypingStats, ScoreEntry,
- * WordBank, ClassicMode, LetterFocusMode, LeaderboardStore) tanpa JUnit. Mencetak PASS/FAIL untuk setiap pengecekan, lalu jumlahnya.
- * Dijalankan dengan selftest.bat (atau: java -ea -cp out SelfTest).
- * Owner: Person A / B / C (masing-masing menulis tes untuk kelasnya sendiri)
- * Materi: Assertion, Exception (try/catch untuk exception yang DIHARAPKAN), Collections
- */
+// SelfTest: tes bagian non-GUI tanpa JUnit, cetak PASS/FAIL
+// Owner: Eskiela Vatsabel Agatya, Satrio Ananda Widiyanto, Hanif Rafa Ramidzar
+// Materi: assertion, exception, collections
 public class SelfTest {
 
-    // Selisih maksimal saat membandingkan angka double (double tidak selalu persis sama).
+    // double tidak selalu persis sama
     private static final double TOLERANCE = 0.001;
 
     private static int passCount = 0;
@@ -46,15 +42,11 @@ public class SelfTest {
         System.out.println();
         System.out.println("Hasil: " + passCount + " PASS, " + failCount + " FAIL");
 
-        // [MATERI: Assertion] asumsi internal: tes di atas pasti sudah menjalankan pengecekan.
+        // [MATERI: Assertion]
         assert passCount + failCount > 0 : "Tidak ada tes yang dijalankan";
     }
 
-    // ---------------------------------------------------------------
-    // Alat bantu
-    // ---------------------------------------------------------------
-
-    // Mencetak PASS atau FAIL dan menghitungnya.
+    // alat bantu
     private static void check(String description, boolean condition) {
         if (condition) {
             passCount++;
@@ -69,10 +61,7 @@ public class SelfTest {
         return Math.abs(a - b) < TOLERANCE;
     }
 
-    // Trik untuk mengetahui apakah -ea aktif:
-    // perintah "assert" hanya DIJALANKAN kalau assertion aktif. Di sini isinya adalah
-    // assignment (=, bukan ==) yang hasilnya true, jadi tidak pernah gagal;
-    // efek sampingnya hanya mengubah assertionsOn menjadi true.
+    // assert cuma jalan kalau -ea aktif, jadi assignment di dalamnya jadi penanda
     private static void checkAssertionsEnabled() {
         boolean assertionsOn = false;
         assert assertionsOn = true;
@@ -84,10 +73,7 @@ public class SelfTest {
         System.out.println();
     }
 
-    // ---------------------------------------------------------------
     // Player
-    // ---------------------------------------------------------------
-
     private static void testPlayer() {
         System.out.println("--- Player ---");
 
@@ -98,21 +84,21 @@ public class SelfTest {
             check("nama valid diterima (error: " + e.getMessage() + ")", false);
         }
 
-        // Satu nama salah untuk setiap aturan.
-        expectInvalidName("   ");               // kosong
-        expectInvalidName("ab");                // terlalu pendek
-        expectInvalidName("abcdefghijklmnop");  // terlalu panjang (16)
-        expectInvalidName("1budi");             // tidak diawali huruf
-        expectInvalidName("_budi");             // tidak diawali huruf
-        expectInvalidName("budi sari");         // ada spasi di tengah
-        expectInvalidName("budi,123");          // ada koma (akan merusak CSV)
-        expectInvalidName("ADMIN");             // nama terlarang
-        expectInvalidName("Null");              // nama terlarang
-        expectInvalidName("guest");             // nama terlarang
+        // satu nama salah untuk tiap aturan
+        expectInvalidName("   ");
+        expectInvalidName("ab");
+        expectInvalidName("abcdefghijklmnop");
+        expectInvalidName("1budi");
+        expectInvalidName("_budi");
+        expectInvalidName("budi sari");
+        expectInvalidName("budi,123");
+        expectInvalidName("ADMIN");
+        expectInvalidName("Null");
+        expectInvalidName("guest");
         System.out.println();
     }
 
-    // Membuat Player dengan nama salah. Tes LULUS kalau exception-nya benar-benar dilempar.
+    // lulus kalau exception-nya dilempar
     private static void expectInvalidName(String name) {
         try {
             new Player(name);
@@ -122,10 +108,7 @@ public class SelfTest {
         }
     }
 
-    // ---------------------------------------------------------------
     // TypingStats
-    // ---------------------------------------------------------------
-
     private static void testTypingStats() {
         System.out.println("--- TypingStats ---");
 
@@ -133,11 +116,12 @@ public class SelfTest {
         check("akurasi 100 kalau belum ada ketukan", isClose(empty.getAccuracy(), 100));
         check("WPM 0 kalau belum 1 detik", isClose(empty.getWpm(500), 0));
 
+        // 2 benar, 2 salah di x (X ikut dihitung sebagai x)
         TypingStats stats = new TypingStats();
-        stats.recordKeystroke('a', 'a');   // benar
-        stats.recordKeystroke('b', 'x');   // salah, seharusnya 'x'
-        stats.recordKeystroke('c', 'c');   // benar
-        stats.recordKeystroke('d', 'X');   // salah, seharusnya 'X' -> dicatat sebagai 'x'
+        stats.recordKeystroke('a', 'a');
+        stats.recordKeystroke('b', 'x');
+        stats.recordKeystroke('c', 'c');
+        stats.recordKeystroke('d', 'X');
 
         check("total ketukan = 4", stats.getTotalKeystrokes() == 4);
         check("ketukan benar = 2", stats.getCorrectKeystrokes() == 2);
@@ -149,11 +133,11 @@ public class SelfTest {
         check("huruf 'x' salah 2 kali (huruf besar ikut dihitung)", xCount != null && xCount == 2);
         check("hanya 1 huruf di peta kesalahan", mistakes.size() == 1);
 
-        // getMistakes() mengembalikan salinan: mengubahnya tidak boleh mengubah data asli.
+        // ubah salinannya, data asli harus tetap
         mistakes.clear();
         check("getMistakes() mengembalikan salinan", stats.getMistakes().size() == 1);
 
-        // 10 ketukan benar dalam 1 menit = 10/5 = 2 kata per menit.
+        // 10 huruf benar dalam 1 menit = 2 WPM
         TypingStats wpmStats = new TypingStats();
         for (int i = 0; i < 10; i++) {
             wpmStats.recordKeystroke('k', 'k');
@@ -163,10 +147,7 @@ public class SelfTest {
         System.out.println();
     }
 
-    // ---------------------------------------------------------------
     // ScoreEntry
-    // ---------------------------------------------------------------
-
     private static void testScoreEntry() {
         System.out.println("--- ScoreEntry ---");
 
@@ -184,7 +165,7 @@ public class SelfTest {
                 && copy.getDate().equals("2026-11-20 15:30");
         check("toCsvLine -> fromCsvLine menghasilkan nilai yang sama", sameValues);
 
-        // Constructor kedua (dari TypingStats).
+        // constructor kedua dari TypingStats
         TypingStats stats = new TypingStats();
         stats.recordKeystroke('a', 'a');
         ScoreEntry fromStats = new ScoreEntry("Sari", "Normal", 10, stats);
@@ -193,9 +174,9 @@ public class SelfTest {
                 fromStats.getDate().length() == ScoreEntry.DATE_PATTERN.length());
 
         testSorting();
-        expectBadLine("Budi,Normal,100");                          // kolom kurang
-        expectBadLine("Budi,Normal,banyak,50.0,90.0,2026-11-20");  // skor bukan angka
-        expectBadLine("Budi,Normal,100,cepat,90.0,2026-11-20");    // WPM bukan angka
+        expectBadLine("Budi,Normal,100");
+        expectBadLine("Budi,Normal,banyak,50.0,90.0,2026-11-20");
+        expectBadLine("Budi,Normal,100,cepat,90.0,2026-11-20");
         System.out.println();
     }
 
@@ -206,7 +187,6 @@ public class SelfTest {
         list.add(new ScoreEntry("C", "Normal", 200, 70.0, 90.0, "-"));
         list.add(new ScoreEntry("D", "Normal", 300, 60.0, 90.0, "-"));
 
-        // Collections.sort memakai compareTo milik ScoreEntry.
         Collections.sort(list);
 
         String order = "";
@@ -217,7 +197,7 @@ public class SelfTest {
                 order.equals("DBCA"));
     }
 
-    // Membaca baris CSV yang rusak. Tes LULUS kalau IllegalArgumentException dilempar.
+    // lulus kalau IllegalArgumentException dilempar
     private static void expectBadLine(String line) {
         try {
             ScoreEntry.fromCsvLine(line);
@@ -227,10 +207,7 @@ public class SelfTest {
         }
     }
 
-    // ---------------------------------------------------------------
     // WordBank
-    // ---------------------------------------------------------------
-
     private static void testWordBank() {
         System.out.println("--- WordBank ---");
 
@@ -242,8 +219,7 @@ public class SelfTest {
             String fiveWords = bank.randomWords(5);
             check("randomWords(5) berisi 5 kata: \"" + fiveWords + "\"", fiveWords.split(" ").length == 5);
 
-            // Setiap huruf a-z harus ada di minimal 40 kata, supaya latihan huruf apa pun
-            // (juga j, q, x, z) punya cukup banyak kata yang berbeda.
+            // tiap huruf a-z harus ada di minimal 40 kata
             String fewLetters = "";
             for (char c = 'a'; c <= 'z'; c++) {
                 int count = bank.wordsContaining(c).size();
@@ -258,7 +234,7 @@ public class SelfTest {
             check("file kata bisa dimuat (error: " + e.getMessage() + ")", false);
         }
 
-        // File yang tidak ada harus menghasilkan WordFileException, bukan crash.
+        // file yang tidak ada harus jadi WordFileException, bukan crash
         try {
             bank.loadWords("/resources/tidak_ada.txt");
             check("file yang tidak ada seharusnya ditolak", false);
@@ -268,7 +244,6 @@ public class SelfTest {
         System.out.println();
     }
 
-    // true kalau setiap kata di daftar berisi huruf letter.
     private static boolean allContain(List<String> words, char letter) {
         for (String word : words) {
             if (word.indexOf(letter) < 0) {
@@ -278,7 +253,6 @@ public class SelfTest {
         return true;
     }
 
-    // Berapa kata di dalam teks (dipisah spasi) yang berisi huruf letter.
     private static int countWordsWith(String text, char letter) {
         int count = 0;
         for (String word : text.split(" ")) {
@@ -289,10 +263,7 @@ public class SelfTest {
         return count;
     }
 
-    // ---------------------------------------------------------------
-    // ClassicMode dan LetterFocusMode (tanpa GUI, tanpa timer)
-    // ---------------------------------------------------------------
-
+    // ClassicMode dan LetterFocusMode, tanpa GUI dan timer
     private static void testModes() {
         System.out.println("--- ClassicMode dan LetterFocusMode ---");
 
@@ -304,7 +275,7 @@ public class SelfTest {
             return;
         }
 
-        // Disimpan di variabel bertipe GameMode (upcasting), seperti di GamePanel.
+        // pakai tipe GameMode seperti di GamePanel
         GameMode normal = new ClassicMode(bank);
         check("Normal: 30 kata", normal.getCurrentTarget().split(" ").length == ClassicMode.WORD_COUNT);
         check("Normal: tidak ada huruf fokus", normal.getFocusLetter() == GameMode.NO_FOCUS);
@@ -324,7 +295,7 @@ public class SelfTest {
         int withJ = countWordsWith(target, 'j');
         check("Fokus J: minimal 24 kata berisi j (" + withJ + ")", withJ >= LetterFocusMode.FOCUS_WORD_COUNT);
 
-        // Semua huruf A-Z (termasuk Q, X, Z) bisa dipakai tanpa error.
+        // semua huruf A-Z harus bisa dipakai
         String badLetters = "";
         for (char c = 'A'; c <= 'Z'; c++) {
             GameMode mode = new LetterFocusMode(bank, c);
@@ -338,16 +309,13 @@ public class SelfTest {
         System.out.println();
     }
 
-    // ---------------------------------------------------------------
-    // LeaderboardStore (memakai file sementara, BUKAN leaderboard asli)
-    // ---------------------------------------------------------------
-
+    // LeaderboardStore, pakai file sementara bukan leaderboard asli
     private static void testLeaderboardStore() {
         System.out.println("--- LeaderboardStore ---");
 
-        // Folder sementara milik sistem (misalnya C:\Users\...\AppData\Local\Temp).
         File testFile = new File(System.getProperty("java.io.tmpdir"), "ketikin_selftest.csv");
-        testFile.delete();   // sisa tes sebelumnya (kalau ada) dibuang dulu
+        // buang sisa tes sebelumnya
+        testFile.delete();
 
         LeaderboardStore store = new LeaderboardStore(testFile);
         check("file belum ada -> leaderboard kosong, tanpa error",
@@ -356,7 +324,7 @@ public class SelfTest {
         store.addScore(new ScoreEntry("Andi", "Normal", 100, 40.0, 90.0, "2026-11-20 10:00"));
         store.addScore(new ScoreEntry("Budi", "Normal", 300, 50.0, 95.0, "2026-11-20 10:05"));
         store.addScore(new ScoreEntry("Cici", "J", 500, 60.0, 99.0, "2026-11-20 10:10"));
-        // Baris lama dari mode yang sudah dihapus: hanya boleh muncul di filter "Semua".
+        // baris mode lama, cuma boleh muncul di "Semua"
         store.addScore(new ScoreEntry("Dodi", "Survival", 50, 30.0, 80.0, "2026-11-19 09:00"));
         boolean saved = store.addScore(new ScoreEntry("Andi", "Normal", 200, 45.0, 92.0, "2026-11-20 10:15"));
         check("addScore berhasil menyimpan", saved);
@@ -378,8 +346,7 @@ public class SelfTest {
         check("rekor pribadi Andi di J = -1 (belum pernah main)",
                 store.getPersonalBest("Andi", "J") == -1);
 
-        // Tambahkan baris rusak secara manual. Baris lain harus tetap terbaca.
-        // FileWriter(file, true) = mode "append": menulis di akhir file, isi lama tidak dihapus.
+        // tambah baris rusak di akhir file, baris lain harus tetap terbaca
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(testFile, true))) {
             writer.write("ini,baris,rusak");
             writer.newLine();
@@ -388,7 +355,7 @@ public class SelfTest {
         } catch (IOException e) {
             check("menulis baris rusak untuk tes (error: " + e.getMessage() + ")", false);
         }
-        // Peringatan dicetak ke System.err, jadi di beberapa terminal bisa muncul di urutan lain.
+        // peringatan lewat System.err, urutannya bisa beda di terminal
         System.out.println("(Dua peringatan \"baris ... dilewati\" dari tes ini memang disengaja.)");
         check("2 baris rusak dilewati, 5 skor lain tetap terbaca", store.loadAll().size() == 5);
         check("baris rusak bukan error untuk seluruh file", store.getLastErrorMessage() == null);
@@ -397,8 +364,7 @@ public class SelfTest {
         testFile.delete();
     }
 
-    // "File" yang sebenarnya folder tidak bisa dibuka oleh FileReader -> IOException.
-    // Tidak boleh crash: hasilnya daftar kosong + pesan error, dan skor baru tidak disimpan.
+    // folder yang dipakai sebagai file bikin IOException, tidak boleh crash
     private static void testUnreadableLeaderboard() {
         File folderAsFile = new File(System.getProperty("java.io.tmpdir"), "ketikin_selftest_folder.csv");
         folderAsFile.mkdir();

@@ -38,7 +38,7 @@ Where a feature is *not* in the slides, it is marked **(not in slides)**.
   `KeyListener` is not shown anywhere. → KetikIn keeps a **`KeyListener` written as an anonymous inner class**,
   reading the text in `keyReleased`. Reason: unlike `DocumentListener`, it lets us safely change the text field
   from inside the listener (cutting off letters typed past the end); a `DocumentListener` that changes its own document
-  throws an exception. `keyTyped` and `keyPressed` stay empty with a comment. Listed in `CODE_GUIDE.md` under
+  throws an exception. `keyTyped` and `keyPressed` stay empty. Listed in `CODE_GUIDE.md` under
   "Things outside the course material".
 - **Input validation (practicum "Input Processing & Validation"):** `JOptionPane.showMessageDialog`, `trim()`,
   `isEmpty()`, `try/catch`. → the menu validates the name with `trim()` + `isEmpty()` + our own checks, catches

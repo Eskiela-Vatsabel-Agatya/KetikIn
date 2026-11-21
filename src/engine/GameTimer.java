@@ -1,27 +1,16 @@
 package engine;
 
-/*
- * GameTimer: thread terpisah yang "berdetak" setiap 100 ms dan memberi tahu listener
- * berapa lama waktu sudah berjalan. Dipakai untuk jam dan WPM live di layar game.
- * Kelas ini sengaja TIDAK memakai Swing; ia berbicara ke UI hanya lewat TimerListener.
- * Satu objek GameTimer = satu ronde. Thread hanya bisa di-start() sekali,
- * jadi setiap ronde baru membuat objek GameTimer baru.
- * Owner: Person A
- * Materi: Multithreading (extends Thread, run, sleep, InterruptedException, volatile),
- *         Inheritance (extends Thread), Abstraction (memakai interface TimerListener)
- */
+// GameTimer: thread yang berdetak tiap 100 ms untuk jam dan WPM live
+// Owner: Eskiela Vatsabel Agatya
+// Materi: multithreading, inheritance, abstraction
 // [MATERI: Multithreading - extends Thread]
-// Gaya ini sama seperti contoh pertama di materi Week 14: buat kelas yang extends Thread,
-// lalu override method run().
+// satu objek per ronde, karena thread cuma bisa di-start sekali
 public class GameTimer extends Thread {
 
-    // Jarak antar detak dalam milidetik.
     private static final long TICK_MILLIS = 100;
 
     // [MATERI: Multithreading - volatile]
-    // volatile = setiap thread selalu melihat nilai TERBARU dari variabel ini.
-    // Flag ini diubah oleh thread UI (stopTimer) dan dibaca oleh thread timer (run).
-    // Tanpa volatile, thread timer bisa terus melihat nilai lama (true) dan tidak berhenti.
+    // volatile biar thread timer lihat nilai terbaru dari EDT
     private volatile boolean running = true;
 
     private TimerListener listener;
@@ -31,34 +20,29 @@ public class GameTimer extends Thread {
         this.listener = listener;
     }
 
-    // Isi pekerjaan thread. Dijalankan otomatis (di thread baru) setelah start() dipanggil.
     @Override
     public void run() {
         startTimeMillis = System.currentTimeMillis();
 
         while (running) {
             try {
-                // Tidur 100 ms. Selama tidur, thread ini tidak memakai CPU.
                 Thread.sleep(TICK_MILLIS);
             } catch (InterruptedException e) {
-                // stopTimer() memanggil interrupt(), yang membangunkan sleep() dengan exception ini.
-                // Artinya: kita diminta berhenti. Keluar dari loop; setelah run() selesai, thread selesai.
+                // dibangunkan oleh stopTimer(), berarti disuruh berhenti
                 break;
             }
 
-            // Bisa saja stopTimer() dipanggil tepat saat sleep selesai; cek lagi sebelum berdetak.
+            // cek lagi, bisa saja stopTimer() dipanggil pas sleep selesai
             if (running) {
                 long elapsedMillis = System.currentTimeMillis() - startTimeMillis;
                 listener.onTick(elapsedMillis);
             }
         }
-        // Loop selesai: run() berakhir, jadi thread ini juga selesai.
     }
 
-    // Menghentikan loop di run() dengan aman. Dipanggil dari thread UI (EDT).
+    // dipanggil dari EDT, interrupt biar tidak nunggu sleep selesai
     public void stopTimer() {
         running = false;
-        // Membangunkan thread kalau sedang sleep, supaya langsung berhenti (tidak menunggu 100 ms).
         interrupt();
     }
 }

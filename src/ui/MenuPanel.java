@@ -20,39 +20,30 @@ import data.InvalidUsernameException;
 import mode.GameMode;
 import model.Player;
 
-/*
- * MenuPanel: layar pertama. Pemain mengisi nama, memilih huruf yang ingin dilatih
- * (atau "Normal"), lalu menekan "Mulai". Ada juga tombol Leaderboard dan Keluar.
- * Owner: Person C
- * Materi: GUI (BorderLayout, GridLayout, FlowLayout, JTextField, JButton, JToggleButton +
- *         ButtonGroup, event handling, JOptionPane), Exception (try/catch InvalidUsernameException),
- *         String (validasi nama), Collections (ArrayList tombol huruf)
- */
+// MenuPanel: layar pertama, isi nama, pilih huruf, lalu mulai
+// Owner: Hanif Rafa Ramidzar
+// Materi: GUI, event handling, exception, string, collections
 public class MenuPanel extends JPanel {
 
-    // Lebar kotak nama, dalam jumlah karakter.
     private static final int NAME_FIELD_COLUMNS = 15;
-    // Pemilih huruf: 27 tombol ("Normal" + A-Z) dalam 3 baris x 9 kolom.
+    // 27 tombol (Normal + A-Z) dalam 3 x 9
     private static final int LETTER_ROWS = 3;
     private static final int LETTER_COLUMNS = 9;
     private static final int LETTER_GAP = 6;
 
     private MainFrame mainFrame;
     private JTextField nameField;
-    // Tulisan di bawah pemilih huruf, misalnya "Fokus: huruf J".
     private JLabel focusLabel;
-    // Semua tombol di pemilih huruf, supaya warnanya bisa diatur ulang dengan satu loop.
     private ArrayList<JToggleButton> letterButtons;
-    // Huruf yang sedang dipilih (huruf besar), atau GameMode.NO_FOCUS untuk "Normal".
+    // huruf besar, atau NO_FOCUS untuk Normal
     private char selectedLetter;
 
     public MenuPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
         letterButtons = new ArrayList<>();
-        // Saat aplikasi dibuka, "Normal" yang terpilih.
         selectedLetter = GameMode.NO_FOCUS;
 
-        // [MATERI: GUI - layout] BorderLayout: judul di atas, isi di tengah, tombol di bawah.
+        // [MATERI: GUI - layout]
         setLayout(new BorderLayout(0, Theme.PADDING));
         setBackground(Theme.BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(Theme.PADDING, Theme.PADDING * 2, Theme.PADDING, Theme.PADDING * 2));
@@ -62,10 +53,9 @@ public class MenuPanel extends JPanel {
         add(createBottomPanel(), BorderLayout.SOUTH);
     }
 
-    // Judul "KetikIn" dan satu kalimat penjelasan di bawahnya.
     private JPanel createTitlePanel() {
         JPanel panel = new JPanel(new GridLayout(2, 1));
-        panel.setOpaque(false);   // tidak menggambar latar sendiri, jadi latar MenuPanel yang terlihat
+        panel.setOpaque(false);
 
         JLabel titleLabel = Theme.createLabel("KetikIn", Theme.TITLE_FONT, Theme.ACCENT);
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -78,7 +68,7 @@ public class MenuPanel extends JPanel {
         return panel;
     }
 
-    // Bagian tengah: kotak nama di atas, pemilih huruf di tengah, tombol "Mulai" di bawah.
+    // nama di atas, pemilih huruf di tengah, tombol Mulai di bawah
     private JPanel createCenterPanel() {
         JPanel panel = new JPanel(new BorderLayout(0, Theme.PADDING));
         panel.setOpaque(false);
@@ -108,7 +98,6 @@ public class MenuPanel extends JPanel {
         return panel;
     }
 
-    // Kotak pemilih huruf: judul kecil, grid tombol, dan tulisan "Fokus: ..." di bawahnya.
     private JPanel createLetterPicker() {
         JPanel box = new JPanel(new BorderLayout(0, Theme.SMALL_PADDING));
         box.setBackground(Theme.PANEL);
@@ -121,14 +110,12 @@ public class MenuPanel extends JPanel {
         focusLabel.setHorizontalAlignment(SwingConstants.CENTER);
         box.add(focusLabel, BorderLayout.SOUTH);
 
-        // Tampilan awal: "Normal" terpilih.
         updateLetterButtons();
         return box;
     }
 
-    // [MATERI: GUI - GridLayout] 3 baris x 9 kolom: "Normal", lalu A sampai Z.
-    // Semua tombol masuk ke SATU ButtonGroup: kalau satu tombol dipilih, tombol lain
-    // otomatis tidak terpilih lagi (seperti pilihan ganda, hanya boleh satu jawaban).
+    // [MATERI: GUI - GridLayout]
+    // satu ButtonGroup, jadi cuma satu tombol yang bisa terpilih
     private JPanel createLetterGrid() {
         JPanel grid = new JPanel(new GridLayout(LETTER_ROWS, LETTER_COLUMNS, LETTER_GAP, LETTER_GAP));
         grid.setOpaque(false);
@@ -138,29 +125,23 @@ public class MenuPanel extends JPanel {
         normalButton.setSelected(true);
         grid.add(normalButton);
 
-        // char juga bisa dipakai di loop: 'A', 'B', 'C', ... sampai 'Z'.
         for (char c = 'A'; c <= 'Z'; c++) {
             grid.add(createLetterButton(String.valueOf(c), c, group));
         }
         return grid;
     }
 
-    // Membuat satu tombol di pemilih huruf. letter = huruf tombol ini, atau NO_FOCUS untuk "Normal".
     private JToggleButton createLetterButton(String text, char letter, ButtonGroup group) {
         JToggleButton button = new JToggleButton(text);
         button.setFont(Theme.BUTTON_FONT);
         button.setFocusPainted(false);
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         button.setBorder(BorderFactory.createEmptyBorder(Theme.SMALL_PADDING, 0, Theme.SMALL_PADDING, 0));
-        // Tampilan bawaan Java mewarnai tombol yang terpilih dengan abu-abu miliknya sendiri.
-        // Supaya warna yang kita atur di updateLetterButtons() yang terlihat:
-        // setContentAreaFilled(false) = jangan pakai warna bawaan itu,
-        // setOpaque(true) = gambar latar tombol dengan warna dari setBackground.
+        // matikan warna abu-abu bawaan biar warna kita yang kelihatan
         button.setContentAreaFilled(false);
         button.setOpaque(true);
 
-        // [MATERI: GUI - event handling] lambda, sama seperti di modul praktikum.
-        // 'letter' adalah parameter yang tidak pernah diubah, jadi boleh dipakai di dalam lambda.
+        // [MATERI: GUI - event handling]
         button.addActionListener(e -> {
             selectedLetter = letter;
             updateLetterButtons();
@@ -171,8 +152,7 @@ public class MenuPanel extends JPanel {
         return button;
     }
 
-    // Mewarnai ulang semua tombol huruf (yang terpilih = warna aksen) dan
-    // memperbarui tulisan "Fokus: ..." di bawahnya.
+    // yang terpilih warna aksen, lalu update tulisan fokus
     private void updateLetterButtons() {
         for (JToggleButton button : letterButtons) {
             if (button.isSelected()) {
@@ -191,7 +171,6 @@ public class MenuPanel extends JPanel {
         }
     }
 
-    // Tombol besar "Mulai".
     private JPanel createStartPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         panel.setOpaque(false);
@@ -199,7 +178,7 @@ public class MenuPanel extends JPanel {
         JButton startButton = new JButton("Mulai");
         Theme.styleButton(startButton);
         startButton.setFont(Theme.HEADING_FONT);
-        // Lebih lebar dari tombol biasa, supaya jelas inilah tombol utama.
+        // lebih lebar biar jelas ini tombol utama
         startButton.setBorder(BorderFactory.createEmptyBorder(Theme.SMALL_PADDING, Theme.PADDING * 4,
                 Theme.SMALL_PADDING, Theme.PADDING * 4));
         startButton.addActionListener(e -> {
@@ -209,7 +188,6 @@ public class MenuPanel extends JPanel {
         return panel;
     }
 
-    // Tombol Leaderboard dan Keluar di bagian bawah.
     private JPanel createBottomPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, Theme.PADDING, 0));
         panel.setOpaque(false);
@@ -230,30 +208,27 @@ public class MenuPanel extends JPanel {
         return panel;
     }
 
-    // Dipanggil saat tombol "Mulai" diklik: cek nama dulu, lalu mulai permainan.
+    // cek nama dulu sebelum mulai
     private void startGame() {
         Player player;
-        // [MATERI: Exception] constructor Player mengecek nama dan bisa melempar
-        // InvalidUsernameException. Pesannya menjelaskan aturan mana yang dilanggar.
+        // [MATERI: Exception]
         try {
             player = new Player(nameField.getText());
         } catch (InvalidUsernameException e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), "Nama tidak valid", JOptionPane.WARNING_MESSAGE);
             nameField.requestFocusInWindow();
-            return;   // tetap di menu
+            return;
         }
 
-        // Tampilkan nama yang sudah dirapikan (tanpa spasi di awal/akhir).
+        // tampilkan nama yang sudah di-trim
         nameField.setText(player.getName());
         mainFrame.setPlayer(player);
         mainFrame.startGame(selectedLetter);
     }
 
-    // Tombol Keluar: tanya konfirmasi dulu, baru System.exit(0).
     private void confirmExit() {
         boolean yes = mainFrame.askConfirmation("Yakin ingin keluar dari KetikIn?", "Keluar");
         if (yes) {
-            // 0 = program selesai dengan normal.
             System.exit(0);
         }
     }

@@ -2,19 +2,14 @@ package data;
 
 import java.util.List;
 
-/*
- * DataStore<T>: interface generik untuk "tempat menyimpan data". T adalah tipe datanya.
- * Contoh: LeaderboardStore implements DataStore<ScoreEntry>, jadi di sana T = ScoreEntry.
- * Owner: Person B
- * Materi: Generics, Abstraction (interface), Collections (List)
- */
+// DataStore: interface generik untuk tempat simpan data
+// Owner: Satrio Ananda Widiyanto
+// Materi: generics, abstraction, collections
 // [MATERI: Generics - generic interface]
 public interface DataStore<T> {
 
-    // Membaca semua data dari penyimpanan.
     List<T> loadAll();
 
-    // Menulis semua data ke penyimpanan (menimpa isi lama).
-    // Mengembalikan true kalau berhasil, false kalau gagal (supaya UI bisa memberi tahu pemain).
+    // true kalau berhasil, biar UI bisa kasih tahu pemain kalau gagal
     boolean saveAll(List<T> items);
 }

@@ -1,7 +1,7 @@
 # Project Summary
 
 Factual input for the paper (makalah) and the slides, which will be written in Indonesian.
-Course: Pemrograman Berorientasi Objek (PBO), class B, 2026. Group of 3 (Person A, B, C).
+Course: Pemrograman Berorientasi Objek (PBO), class B, 2026. Group of 3 (Eskiela Vatsabel Agatya, Satrio Ananda Widiyanto, Hanif Rafa Ramidzar).
 For course-topic locations with file and line numbers, see `MATERIALS_MAP.md`.
 
 ## 1. Background / problem

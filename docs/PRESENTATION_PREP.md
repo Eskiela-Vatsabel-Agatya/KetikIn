@@ -10,16 +10,16 @@ Leaderboard filtered on that letter.
 
 ---
 
-## Person A — game rules, statistics, timer, game screen
+## Eskiela Vatsabel Agatya — game rules, statistics, timer, game screen
 
 **Owns:** `mode/GameMode.java`, `mode/ClassicMode.java`, `mode/LetterFocusMode.java`, `model/TypingStats.java`,
 `engine/GameTimer.java`, `engine/TimerListener.java`, `ui/GamePanel.java`.
 **Topics:** Inheritance, Abstraction, runtime Polymorphism, Multithreading + EDT.
 
 **Show on screen:**
-1. The class chain: `src/mode/GameMode.java:17` (abstract) → `src/mode/ClassicMode.java:16` → `src/mode/LetterFocusMode.java:18`.
-2. `src/ui/GamePanel.java:41` `private GameMode mode;` and `src/ui/GamePanel.java:297` (calls `mode.getFocusLetter()`).
-3. `src/engine/GameTimer.java:39` (the loop) and `src/ui/GamePanel.java:325` (`invokeLater`).
+1. The class chain: `src/mode/GameMode.java:10` (abstract) → `src/mode/ClassicMode.java:9` → `src/mode/LetterFocusMode.java:10`.
+2. `src/ui/GamePanel.java:33` `private GameMode mode;` and `src/ui/GamePanel.java:242` (calls `mode.getFocusLetter()`).
+3. `src/engine/GameTimer.java:27` (the loop) and `src/ui/GamePanel.java:259` (`invokeLater`).
 
 **Talk outline (~2 min):**
 - `GameMode` is abstract: it lists what every mode must do (`getCurrentTarget`, `submit`, `isOver`, `calculateScore`).
@@ -43,16 +43,16 @@ Leaderboard filtered on that letter.
 
 ---
 
-## Person B — files, word list, result screen, heatmap
+## Satrio Ananda Widiyanto — files, word list, result screen, heatmap
 
 **Owns:** `data/WordBank.java`, `data/LeaderboardStore.java`, `data/DataStore.java`, `data/WordFileException.java`,
 `data/InvalidUsernameException.java`, `resources/words_en.txt`, `ui/ResultPanel.java`, `ui/KeyboardHeatmapPanel.java`.
 **Topics:** Generics, Collections (Map), Java IO, Exceptions & Assertions.
 
 **Show on screen:**
-1. `src/data/WordBank.java:118` `randomWordsWithFocus` (the 4 steps) and `src/data/WordBank.java:108` (`indexOf`).
-2. `src/data/LeaderboardStore.java:28` (`implements DataStore<ScoreEntry>`) and `src/data/LeaderboardStore.java:70` (try-with-resources).
-3. `src/ui/KeyboardHeatmapPanel.java:130` (the `Map.Entry` loop) and the color formula at line 190.
+1. `src/data/WordBank.java:99` `randomWordsWithFocus` (the 4 steps) and `src/data/WordBank.java:91` (`indexOf`).
+2. `src/data/LeaderboardStore.java:19` (`implements DataStore<ScoreEntry>`) and `src/data/LeaderboardStore.java:57` (try-with-resources).
+3. `src/ui/KeyboardHeatmapPanel.java:108` (the `Map.Entry` loop) and the color formula at line 190.
 
 **Talk outline (~2 min):**
 - The word list (2626 words) is inside the jar; it is read with `getResourceAsStream` + `BufferedReader`. Every letter is in at least 57 words, so even Q, X, Z work.
@@ -76,16 +76,16 @@ Leaderboard filtered on that letter.
 
 ---
 
-## Person C — window, menu, player name, scores table
+## Hanif Rafa Ramidzar — window, menu, player name, scores table
 
 **Owns:** `model/Player.java`, `model/ScoreEntry.java`, `ui/MainFrame.java`, `ui/MenuPanel.java`,
 `ui/LeaderboardPanel.java`, `ui/Theme.java`, `app/Main.java`.
 **Topics:** Encapsulation, String (validation), GUI / CardLayout / events, JTable + Collections, compile-time Polymorphism.
 
 **Show on screen:**
-1. `src/model/Player.java:43` `validate` (the loop at line 71) and the setter at line 35.
-2. `src/ui/MenuPanel.java:132` `createLetterGrid` (27 toggle buttons, one `ButtonGroup`).
-3. `src/ui/LeaderboardPanel.java:156` `refresh` and `src/model/ScoreEntry.java:63` `compareTo`.
+1. `src/model/Player.java:34` `validate` (the loop at line 71) and the setter at line 35.
+2. `src/ui/MenuPanel.java:119` `createLetterGrid` (27 toggle buttons, one `ButtonGroup`).
+3. `src/ui/LeaderboardPanel.java:138` `refresh` and `src/model/ScoreEntry.java:50` `compareTo`.
 
 **Talk outline (~2 min):**
 - `Main` builds the window on the EDT; `MainFrame extends JFrame` holds 4 screens in a `CardLayout`.

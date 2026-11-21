@@ -14,13 +14,9 @@ import mode.GameMode;
 import model.Player;
 import model.TypingStats;
 
-/*
- * ResultPanel: layar hasil setelah satu ronde selesai. Menampilkan fokus ronde ini (di judul),
- * skor, WPM, akurasi, waktu, jumlah ketukan benar/salah, dan heatmap kesalahan di keyboard.
- * Owner: Person B
- * Materi: GUI (BorderLayout, GridLayout, label, tombol), String (String.format),
- *         Polymorphism runtime (mode.calculateScore())
- */
+// ResultPanel: layar hasil, skor, WPM, akurasi, waktu, dan heatmap
+// Owner: Satrio Ananda Widiyanto
+// Materi: GUI, string, polymorphism
 public class ResultPanel extends JPanel {
 
     private static final double MILLIS_PER_SECOND = 1000.0;
@@ -35,12 +31,10 @@ public class ResultPanel extends JPanel {
     private JLabel timeLabel;
     private JLabel correctLabel;
     private JLabel wrongLabel;
-    // Heatmap kesalahan (gambar keyboard berwarna).
     private KeyboardHeatmapPanel heatmapPanel;
 
-    // Huruf fokus ronde terakhir (atau GameMode.NO_FOCUS), dipakai tombol "Main lagi".
+    // dipakai tombol "Main lagi" dan "Leaderboard"
     private char lastFocusLetter;
-    // "Normal" atau huruf fokus ronde terakhir, dipakai tombol "Leaderboard".
     private String lastFocusLabel;
 
     public ResultPanel(MainFrame mainFrame) {
@@ -55,7 +49,7 @@ public class ResultPanel extends JPanel {
         add(createButtonPanel(), BorderLayout.SOUTH);
     }
 
-    // Bagian atas: judul, dan di bawahnya tulisan "Rekor pribadi baru!" (kalau ada).
+    // judul dan tulisan rekor pribadi
     private JPanel createTitlePanel() {
         JPanel panel = new JPanel(new GridLayout(2, 1));
         panel.setOpaque(false);
@@ -70,12 +64,12 @@ public class ResultPanel extends JPanel {
         return panel;
     }
 
-    // Bagian tengah: kotak berisi angka-angka hasil, dan heatmap keyboard di sebelahnya.
+    // kotak angka di kiri, heatmap di kanan
     private JPanel createCenterPanel() {
         JPanel center = new JPanel(new FlowLayout(FlowLayout.CENTER));
         center.setOpaque(false);
 
-        // [MATERI: GUI - GridLayout] 6 baris x 2 kolom: nama angka di kiri, nilainya di kanan.
+        // [MATERI: GUI - GridLayout]
         JPanel statsBox = new JPanel(new GridLayout(6, 2, Theme.PADDING * 2, Theme.SMALL_PADDING));
         statsBox.setBackground(Theme.PANEL);
         statsBox.setBorder(BorderFactory.createEmptyBorder(Theme.PADDING, Theme.PADDING * 2, Theme.PADDING, Theme.PADDING * 2));
@@ -86,20 +80,17 @@ public class ResultPanel extends JPanel {
         timeLabel = addStatRow(statsBox, "Waktu");
         correctLabel = addStatRow(statsBox, "Ketukan benar");
         wrongLabel = addStatRow(statsBox, "Ketukan salah");
-        // Skor dibuat lebih menonjol.
         scoreLabel.setForeground(Theme.ACCENT);
 
         center.add(statsBox);
 
-        // Heatmap kesalahan di sebelah kanan kotak angka. (Di bawahnya tidak muat
-        // di jendela setinggi 650 pixel.) FlowLayout menaruh keduanya berdampingan.
+        // di samping, karena di bawah tidak muat di tinggi 650
         heatmapPanel = new KeyboardHeatmapPanel();
         center.add(heatmapPanel);
         return center;
     }
 
-    // Menambahkan satu baris "nama : nilai" ke kotak, lalu mengembalikan label nilainya
-    // supaya bisa diisi nanti di showResult().
+    // tambah baris "nama : nilai", balikin label nilainya
     private JLabel addStatRow(JPanel box, String name) {
         box.add(Theme.createLabel(name, Theme.HEADING_FONT, Theme.TEXT_MUTED));
         JLabel valueLabel = Theme.createLabel("-", Theme.HEADING_FONT, Theme.TEXT);
@@ -107,7 +98,6 @@ public class ResultPanel extends JPanel {
         return valueLabel;
     }
 
-    // Tombol "Main lagi" dan "Menu" di bagian bawah.
     private JPanel createButtonPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, Theme.PADDING, 0));
         panel.setOpaque(false);
@@ -115,7 +105,7 @@ public class ResultPanel extends JPanel {
         JButton playAgainButton = new JButton("Main lagi");
         Theme.styleButton(playAgainButton);
         playAgainButton.addActionListener(e -> {
-            // Ronde BARU dengan huruf fokus yang sama (kata-katanya diacak ulang).
+            // ronde baru dengan fokus yang sama
             mainFrame.startGame(lastFocusLetter);
         });
         panel.add(playAgainButton);
@@ -130,30 +120,26 @@ public class ResultPanel extends JPanel {
         JButton leaderboardButton = new JButton("Leaderboard");
         Theme.styleButton(leaderboardButton);
         leaderboardButton.addActionListener(e -> {
-            // Langsung pilih filter untuk fokus yang baru dimainkan.
             mainFrame.showLeaderboard(lastFocusLabel);
         });
         panel.add(leaderboardButton);
         return panel;
     }
 
-    // Mengisi semua label dengan hasil ronde yang baru selesai.
-    // newPersonalBest = true kalau skor ini lebih tinggi dari semua skor pemain ini sebelumnya
-    // dengan fokus yang sama.
+    // isi semua label dengan hasil ronde
     public void showResult(GameMode mode, Player player, boolean newPersonalBest) {
         lastFocusLetter = mode.getFocusLetter();
         lastFocusLabel = mode.getFocusLabel();
         TypingStats stats = mode.getStats();
 
-        // getName() = "Mode normal" atau misalnya "Fokus huruf J", jadi fokusnya terlihat di judul.
         titleLabel.setText("Hasil " + player.getName() + " - " + mode.getName());
         if (newPersonalBest) {
             personalBestLabel.setText("Rekor pribadi baru!");
         } else {
-            personalBestLabel.setText(" ");   // spasi supaya tinggi baris tetap sama
+            // spasi biar tinggi baris tetap
+            personalBestLabel.setText(" ");
         }
-        // calculateScore() dipanggil lewat variabel GameMode: rumus yang dipakai
-        // adalah rumus milik mode aslinya (runtime polymorphism).
+        // [MATERI: Polymorphism - runtime]
         scoreLabel.setText(String.valueOf(mode.calculateScore()));
         wpmLabel.setText(String.format("%.1f", stats.getWpm()));
         accuracyLabel.setText(String.format("%.1f%%", stats.getAccuracy()));

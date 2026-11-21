@@ -3,7 +3,7 @@
 A typing trainer that helps you practise the letters you keep missing. Written in Java Swing as the final project
 for Pemrograman Berorientasi Objek (PBO), class B, 2026.
 
-Repository: _(add the GitHub link here)_
+Repository: https://github.com/Eskiela-Vatsabel-Agatya/KetikIn
 
 ## Features
 
@@ -64,10 +64,8 @@ Start reading at `docs/CODE_GUIDE.md`.
 
 ## Team
 
-| Person | Owns | Topics |
+| Name | Owns | Topics |
 |---|---|---|
-| Person A | `mode/*`, `model/TypingStats`, `engine/*`, `ui/GamePanel` | Inheritance, abstraction, runtime polymorphism, multithreading + EDT |
-| Person B | `data/*`, `resources/*`, `ui/ResultPanel`, `ui/KeyboardHeatmapPanel` | Generics, collections, Java IO, exceptions & assertions |
-| Person C | `model/Player`, `model/ScoreEntry`, `ui/MainFrame`, `ui/MenuPanel`, `ui/LeaderboardPanel`, `ui/Theme`, `app/Main` | Encapsulation, String validation, GUI/CardLayout/events, JTable + collections, compile-time polymorphism |
-
-_(Replace "Person A/B/C" with real names.)_
+| Eskiela Vatsabel Agatya | `mode/*`, `model/TypingStats`, `engine/*`, `ui/GamePanel` | Inheritance, abstraction, runtime polymorphism, multithreading + EDT |
+| Satrio Ananda Widiyanto | `data/*`, `resources/*`, `ui/ResultPanel`, `ui/KeyboardHeatmapPanel` | Generics, collections, Java IO, exceptions & assertions |
+| Hanif Rafa Ramidzar | `model/Player`, `model/ScoreEntry`, `ui/MainFrame`, `ui/MenuPanel`, `ui/LeaderboardPanel`, `ui/Theme`, `app/Main` | Encapsulation, String validation, GUI/CardLayout/events, JTable + collections, compile-time polymorphism |

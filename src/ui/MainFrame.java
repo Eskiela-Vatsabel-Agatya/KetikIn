@@ -15,32 +15,24 @@ import mode.LetterFocusMode;
 import model.Player;
 import model.ScoreEntry;
 
-/*
- * MainFrame: satu-satunya jendela aplikasi. Di dalamnya ada 4 layar (Menu, Game, Hasil,
- * Leaderboard) yang ditumpuk dengan CardLayout; hanya satu yang terlihat pada satu waktu.
- * MainFrame juga menyimpan data bersama: WordBank (dimuat sekali), LeaderboardStore,
- * dan Player saat ini. Panel-panel memanggil method di kelas ini untuk pindah layar.
- * Owner: Person C
- * Materi: GUI (JFrame, CardLayout, JOptionPane), Inheritance (extends JFrame),
- *         Exception (try/catch WordFileException), Polymorphism runtime (createMode),
- *         Polymorphism compile-time (overload showLeaderboard)
- */
-// [MATERI: Inheritance] MainFrame adalah JFrame yang kita tambahi isi sendiri.
+// MainFrame: jendela utama, 4 layar ditumpuk pakai CardLayout
+// Owner: Hanif Rafa Ramidzar
+// Materi: GUI, inheritance, exception, polymorphism
+// [MATERI: Inheritance]
 public class MainFrame extends JFrame {
 
-    // Nama setiap layar di CardLayout.
+    // nama tiap layar di CardLayout
     public static final String MENU = "MENU";
     public static final String GAME = "GAME";
     public static final String RESULT = "RESULT";
     public static final String LEADERBOARD = "LEADERBOARD";
 
-    // Ukuran jendela. (Tidak dinamai WIDTH/HEIGHT karena JFrame sudah punya konstanta bernama itu.)
+    // bukan WIDTH/HEIGHT karena JFrame sudah punya konstanta itu
     private static final int FRAME_WIDTH = 1000;
     private static final int FRAME_HEIGHT = 650;
 
     // [MATERI: GUI - CardLayout]
     private CardLayout cardLayout;
-    // Panel "wadah" yang memakai CardLayout; keempat layar dimasukkan ke sini.
     private JPanel cardPanel;
 
     private MenuPanel menuPanel;
@@ -48,41 +40,37 @@ public class MainFrame extends JFrame {
     private ResultPanel resultPanel;
     private LeaderboardPanel leaderboardPanel;
 
-    // Dimuat SEKALI saat aplikasi mulai, lalu dipakai bersama oleh semua ronde.
+    // dimuat sekali, dipakai semua ronde
     private WordBank wordBank;
-    // Satu objek untuk membaca/menulis file leaderboard, dipakai bersama oleh semua layar.
     private LeaderboardStore leaderboardStore;
     private Player player;
-    // true kalau file kata berhasil dimuat dan semua layar sudah dibuat.
+    // true kalau file kata berhasil dimuat
     private boolean ready;
 
     public MainFrame() {
         super("KetikIn");
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
         setResizable(false);
-        // null = tidak relatif ke jendela lain, jadi jendela muncul di tengah layar.
+        // muncul di tengah layar
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setBackground(Theme.BACKGROUND);
 
         leaderboardStore = new LeaderboardStore();
         ready = loadWordBank();
-        // Layar hanya dibuat kalau file kata berhasil dimuat. Kalau gagal, Main akan menutup jendela ini.
+        // kalau gagal, Main yang menutup jendela ini
         if (ready) {
             buildScreens();
         }
     }
 
-    // Memuat file kata. Mengembalikan false (dan menampilkan pesan) kalau gagal.
     private boolean loadWordBank() {
         wordBank = new WordBank();
-        // [MATERI: Exception] loadWords bisa melempar WordFileException (checked),
-        // jadi compiler mewajibkan try/catch di sini.
+        // [MATERI: Exception]
         try {
             wordBank.loadWords(WordBank.WORDS_PATH);
             return true;
         } catch (WordFileException e) {
-            // Tanpa daftar kata, permainan tidak bisa berjalan. Beri tahu pemain dengan sopan.
             JOptionPane.showMessageDialog(null,
                     "File kata tidak bisa dimuat:\n" + e.getMessage() + "\n\nKetikIn akan ditutup.",
                     "KetikIn - Error",
@@ -91,20 +79,16 @@ public class MainFrame extends JFrame {
         }
     }
 
-    // Membuat keempat layar dan memasukkannya ke CardLayout.
     private void buildScreens() {
         cardLayout = new CardLayout();
         cardPanel = new JPanel(cardLayout);
 
-        // Setiap panel diberi referensi "this" (MainFrame ini), supaya tombol di panel
-        // bisa memanggil method MainFrame, misalnya showMenu() atau startGame().
-        // Cara ini sederhana: panel cukup tahu satu objek, yaitu MainFrame.
+        // tiap panel dikasih this biar tombolnya bisa panggil method MainFrame
         menuPanel = new MenuPanel(this);
         gamePanel = new GamePanel(this);
         resultPanel = new ResultPanel(this);
         leaderboardPanel = new LeaderboardPanel(this);
 
-        // Argumen kedua = nama kartu, dipakai nanti oleh showScreen().
         cardPanel.add(menuPanel, MENU);
         cardPanel.add(gamePanel, GAME);
         cardPanel.add(resultPanel, RESULT);
@@ -118,7 +102,6 @@ public class MainFrame extends JFrame {
         return ready;
     }
 
-    // Menampilkan layar dengan nama tertentu (MENU, GAME, RESULT, atau LEADERBOARD).
     public void showScreen(String name) {
         cardLayout.show(cardPanel, name);
     }
@@ -127,9 +110,8 @@ public class MainFrame extends JFrame {
         showScreen(MENU);
     }
 
-    // Membuat objek mode baru untuk huruf fokus yang dipilih.
-    // [MATERI: Polymorphism - runtime] tipe kembaliannya GameMode, tapi objek aslinya
-    // bisa ClassicMode atau LetterFocusMode (upcasting).
+    // [MATERI: Polymorphism - runtime]
+    // tipe kembaliannya GameMode, isinya ClassicMode atau LetterFocusMode
     private GameMode createMode(char focusLetter) {
         if (focusLetter == GameMode.NO_FOCUS) {
             return new ClassicMode(wordBank);
@@ -137,67 +119,56 @@ public class MainFrame extends JFrame {
         return new LetterFocusMode(wordBank, focusLetter);
     }
 
-    // Memulai ronde baru. focusLetter = huruf yang dilatih, atau GameMode.NO_FOCUS untuk mode normal.
-    // Dipanggil dari menu dan dari tombol "Main lagi" (dengan huruf fokus yang sama).
+    // dipanggil dari menu dan tombol "Main lagi"
     public void startGame(char focusLetter) {
         GameMode mode = createMode(focusLetter);
-        // Tampilkan layar game dulu, baru mulai ronde, supaya kotak ketik bisa langsung diberi fokus.
+        // tampilkan layar dulu biar kotak ketik bisa langsung fokus
         showScreen(GAME);
         gamePanel.startGame(mode);
     }
 
-    // Dipanggil GamePanel ketika ronde selesai (BUKAN saat pemain keluar di tengah ronde).
-    // Skor disimpan ke file dulu, lalu layar hasil ditampilkan.
+    // ronde selesai, simpan skor lalu tampilkan hasil
     public void showResult(GameMode mode) {
         int score = mode.calculateScore();
-
-        // getFocusLabel() = "Normal" atau huruf fokus, misalnya "J". Inilah yang disimpan di CSV.
         String focus = mode.getFocusLabel();
 
-        // Rekor lama dicari SEBELUM skor baru disimpan, supaya bisa dibandingkan.
-        // Hanya dengan fokus yang sama: rekor J dibandingkan dengan rekor J.
+        // cari rekor lama sebelum skor baru disimpan, cuma fokus yang sama
         int previousBest = leaderboardStore.getPersonalBest(player.getName(), focus);
 
-        // Constructor ScoreEntry versi kedua: WPM, akurasi, dan tanggal diambil otomatis.
         ScoreEntry entry = new ScoreEntry(player.getName(), focus, score, mode.getStats());
-        // Disimpan langsung di EDT, tanpa thread tambahan: filenya hanya beberapa baris,
-        // jadi menulisnya sangat cepat dan layar tidak sempat terasa macet.
+        // simpan langsung di EDT, filenya kecil jadi tidak bikin macet
         boolean saved = leaderboardStore.addScore(entry);
         boolean newPersonalBest = saved && score > previousBest;
 
         resultPanel.showResult(mode, player, newPersonalBest);
         showScreen(RESULT);
 
-        // Gagal menyimpan bukan alasan untuk menyembunyikan hasil: layar hasil tetap tampil,
-        // pemain hanya diberi peringatan.
+        // gagal simpan cuma kasih peringatan, hasil tetap tampil
         if (!saved) {
             JOptionPane.showMessageDialog(this, leaderboardStore.getLastErrorMessage(),
                     "Leaderboard", JOptionPane.WARNING_MESSAGE);
         }
     }
 
-    // [MATERI: Polymorphism - compile-time] dua method showLeaderboard dengan parameter berbeda.
-    // Dari menu: tanpa parameter, filter "Semua" yang dipilih.
+    // [MATERI: Polymorphism - compile-time]
+    // dari menu, filter "Semua"
     public void showLeaderboard() {
         showLeaderboard(LeaderboardStore.FILTER_ALL);
     }
 
-    // Dari layar hasil: filter untuk fokus yang baru saja dimainkan (misalnya "J").
+    // dari layar hasil, filter fokus yang baru dimainkan
     public void showLeaderboard(String focus) {
         showScreen(LEADERBOARD);
-        // Memilih filter juga membaca ulang data, supaya skor terbaru ikut tampil.
         leaderboardPanel.showFilter(focus);
     }
 
     // [MATERI: GUI - JOptionPane]
-    // Menampilkan dialog konfirmasi dengan tombol "Ya" dan "Tidak" (bahasa Indonesia).
-    // Mengembalikan true kalau pemain memilih "Ya".
+    // tombol Ya/Tidak, true kalau pilih Ya
     public boolean askConfirmation(String message, String title) {
         String[] options = {"Ya", "Tidak"};
         int choice = JOptionPane.showOptionDialog(this, message, title,
                 JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
                 null, options, options[1]);
-        // choice = nomor tombol yang diklik: 0 = "Ya", 1 = "Tidak", -1 = dialog ditutup.
         return choice == 0;
     }
 

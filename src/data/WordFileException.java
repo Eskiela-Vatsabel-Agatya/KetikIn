@@ -1,19 +1,13 @@
 package data;
 
-/*
- * WordFileException: dilempar ketika file kata tidak bisa dibaca
- * (tidak ditemukan atau isinya kosong).
- * Owner: Person B
- * Materi: Exception (custom exception, checked exception)
- */
+// WordFileException: dilempar kalau file kata tidak ketemu atau kosong
+// Owner: Satrio Ananda Widiyanto
+// Materi: exception
 // [MATERI: Exception - custom exception]
-// Kita pakai "extends Exception" (checked exception), bukan RuntimeException.
-// Artinya compiler MEMAKSA pemanggil loadWords() untuk menangani error ini
-// (try/catch atau throws). Jadi tidak mungkin ada yang lupa bahwa file kata bisa gagal dibaca.
+// checked exception, jadi pemanggil loadWords() wajib menanganinya
 public class WordFileException extends Exception {
 
     public WordFileException(String message) {
-        // super(message) = simpan pesan di kelas induk (Exception), nanti dibaca dengan getMessage().
         super(message);
     }
 }
